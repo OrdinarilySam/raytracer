@@ -19,4 +19,4 @@ typedef struct {
 
 
 ColorType traceRay(RayType ray);
-ColorType shadeRay(SphereType sphere[], SphereType *spheres, int numSpheres);
+ColorType shadeRay(SphereType closestSphere);

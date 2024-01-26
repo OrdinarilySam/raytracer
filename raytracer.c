@@ -418,7 +418,7 @@ ColorType traceRay(RayType ray) {
     // todo: keep array of spheres that are hit by ray as well as distances
 
     float minimumDistance = MAXFLOAT;
-    ColorType currentColor = materials[0];
+    SphereType currentSphere;
 
     for (int i = 0; i <= sphereIndex; i++) {
         
@@ -440,24 +440,26 @@ ColorType traceRay(RayType ray) {
             continue;
         }
 
-        // todo: outsource logic to shadeRay
         float plusT = (-B + sqrtf(powf(B, 2) - (4 * C))) / 2;
         float minusT = (-B + sqrtf(powf(B, 2) - (4 * C))) / 2;
 
         if ((plusT > 0) && (plusT < minimumDistance)) {
             minimumDistance = plusT;
-            currentColor = materials[spheres[i].m];
+            currentSphere = spheres[i];
         }
 
         if ((minusT > 0) && (minusT < minimumDistance)) {
             minimumDistance = minusT;
-            currentColor = materials[spheres[i].m];
+            currentSphere = spheres[i];
         }
     } 
-    return currentColor;
+    if (minimumDistance == MAXFLOAT) {
+        return materials[0];
+    }
+    return shadeRay(currentSphere);
 }
 
-// todo: create shadeRay function
-// ColorType shadeRay(SphereType sphere[], SphereType *spheres, int numSpheres) {
-//     // TODO
-// }
+
+ColorType shadeRay(SphereType closestSphere) {
+    return materials[closestSphere.m];
+}
