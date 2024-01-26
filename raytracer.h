@@ -20,4 +20,4 @@ typedef struct {
 
 ColorType traceRay(RayType ray);
 ColorType shadeRay(SphereType closestSphere);
-int exit(int value);
+int cleanExit(int value);

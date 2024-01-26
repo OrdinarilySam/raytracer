@@ -6,7 +6,6 @@
 
 // todo: find out how to dynamically size an array
 // todo: add ellipsoids
-// todo: fix spheres disappearing in parallel view
 
 int materialIndex = 0;
 int sphereIndex = -1;
@@ -115,7 +114,7 @@ int main(int argc, char *argv[]) {
                 ((newMaterial.b < 0) || (newMaterial.b > 1))
             ) {
                 printf("Material color must be between 0 and 1\n");
-                return exit(1);
+                return cleanExit(1);
             }
 
             // add the material to the array, resizing if necessary
@@ -142,13 +141,13 @@ int main(int argc, char *argv[]) {
             // ensure the sphere has size
             if (newSphere.r <= 0) {
                 printf("Sphere radius must be greater than 0\n");
-                return exit(1);
+                return cleanExit(1);
             }
 
             // make sure a material was assigned
             if (materialIndex == 0) {
                 printf("Must have at least one mtlcolor before a sphere.\n");
-                return exit(1);
+                return cleanExit(1);
             }
             newSphere.m = materialIndex;
 
@@ -189,7 +188,7 @@ int main(int argc, char *argv[]) {
     // check for missing eye parameter 
     if (!foundEye) {
         printf("Missing eye parameter\n");
-        return exit(1);
+        return cleanExit(1);
     }
 
     // check that viewdir has length
@@ -199,7 +198,7 @@ int main(int argc, char *argv[]) {
         powf(viewdir.z, 2.0)
     ) <= 0.0) {
         printf("viewdir must have length\n");
-        return exit(1);
+        return cleanExit(1);
     }
 
     // check that updir is normalized
@@ -209,19 +208,19 @@ int main(int argc, char *argv[]) {
         powf(updir.z, 2.0)
     ) != 1.0) {
         printf("updir must be a normalized vector\n");
-        return exit(1);
+        return cleanExit(1);
     }
 
     // check that 0 < hfov < 360
     if ((hfov <= 0) || (hfov >= 360)) {
         printf("hfov must be between 0 and 360 (exclusive)\n");
-        return exit(1);
+        return cleanExit(1);
     }
 
     // check that imsize is greater than 1 pixel
     if ((1 >= imgHeight) || (1 >= imgWidth)) {
         printf("Image width and height must be more than 1 pixel\n");
-        return exit(1);
+        return cleanExit(1);
     }
 
     // check that background colors are between 0 and 1
@@ -231,7 +230,7 @@ int main(int argc, char *argv[]) {
         ((bkgcolor.b < 0) || (bkgcolor.b > 1))
     ) {
         printf("Colors must be between 0 and 1 (inclusive)\n");
-        return exit(1);
+        return cleanExit(1);
     }
 
     // todo: make sure viewdir and updir aren't parallel or close to parallel
@@ -371,7 +370,7 @@ int main(int argc, char *argv[]) {
     FILE *outputFile = fopen(fileName, "w");
     if (fptr == NULL) {
         printf("Couldn't create file %s\n", argv[1]);
-        return exit(1);
+        return cleanExit(1);
     }
 
     fprintf(outputFile, "P3 %d %d %d\n", imgWidth, imgHeight, 255);
@@ -387,7 +386,7 @@ int main(int argc, char *argv[]) {
     }
 
     fclose(outputFile);
-    return exit(0);
+    return cleanExit(0);
 }
 
 
@@ -443,7 +442,7 @@ ColorType shadeRay(SphereType closestSphere) {
     return materials[closestSphere.m];
 }
 
-int exit(int value) {
+int cleanExit(int value) {
     free(spheres);
     free(materials);
     return value;
