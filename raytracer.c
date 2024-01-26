@@ -18,29 +18,41 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // todo read file and count lines to determine material and sphere count
+    // count number of spheres and materials
+    int sphereCount = 0;
+    int materialCount = 1;
 
-    FILE *fptr = fopen(argv[1], "r");
-    if (fptr == NULL) {
+    char buffer[100];
+    FILE *fscan = fopen(argv[1], "r");
+    if (fscan == NULL) {
         printf("Couldn't open file %s\n", argv[1]);
         return 1;
     }
+    while (fscanf(fscan, "%s", buffer) != EOF) {
+        if (strcmp(buffer, "sphere") == 0) {
+            sphereCount++;
+        } else if (strcmp(buffer, "mtlcolor") == 0) {
+            materialCount++;
+        }
+    }
+    fclose(fscan);
 
-    int materialsSize = 100;
-    materials = malloc(100 * sizeof(ColorType));
+    // allocate material array
+    materials = malloc(materialCount * sizeof(ColorType));
     if (materials == NULL) {
         printf("Failed to initialize a material array. Exiting...\n");
         return 1;
     }
 
-    int spheresSize = 200;
-    spheres = malloc(200 * sizeof(SphereType));
+    // allocate sphere array
+    spheres = malloc(sphereCount * sizeof(SphereType));
     if (spheres == NULL) {
         printf("Failed to initialize an object array. Exiting...\n");
         free(materials);
         return 1;
     }
 
+    // variable declaration
     CoordType eye;
     CoordType viewdir = {0,0,0};
     CoordType updir = {0,0,0};
@@ -58,7 +70,12 @@ int main(int argc, char *argv[]) {
 
     /* ========================= INPUT HANDLING ========================= */
 
-    char buffer[100];
+    FILE *fptr = fopen(argv[1], "r");
+    if (fptr == NULL) {
+        printf("Couldn't open file %s\n", argv[1]);
+        return 1;
+    }
+
     while (fscanf(fptr, "%s", buffer) != EOF) {
         if (strcmp(buffer, "eye") == 0) {
             // set the eye pos
@@ -118,17 +135,8 @@ int main(int argc, char *argv[]) {
                 return cleanExit(1);
             }
 
-            // add the material to the array, resizing if necessary
+            // add the material to the array
             materialIndex++;
-            if (materialIndex >= materialsSize) {
-                materials = realloc(materials, materialsSize * 2);
-                if (materials == NULL) {
-                    printf("Failed to resize materials array.\n");
-                    free(spheres);
-                    return 1;
-                }
-                materialsSize *= 2;
-            }
             materials[materialIndex] = newMaterial;
             
         } else if (strcmp(buffer, "sphere") == 0) {
@@ -154,15 +162,6 @@ int main(int argc, char *argv[]) {
 
             // add the sphere to the array, resizing if necessary
             sphereIndex++;
-            if (sphereIndex >= spheresSize) {
-                spheres = realloc(spheres, spheresSize * 2);
-                if (spheres== NULL) {
-                    printf("Failed to resize spheres array.\n");
-                    free(materials);
-                    return 1;
-                }
-                spheresSize *= 2;
-            }
             spheres[sphereIndex] = newSphere;
         }
     }
