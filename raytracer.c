@@ -4,7 +4,6 @@
 #include <math.h>
 #include "raytracer.h"
 
-// todo: find out how to dynamically size an array
 // todo: add ellipsoids
 
 int materialIndex = 0;
@@ -18,6 +17,8 @@ int main(int argc, char *argv[]) {
         printf("Usage: ./<program> <inputfile>\n");
         return 1;
     }
+
+    // todo read file and count lines to determine material and sphere count
 
     FILE *fptr = fopen(argv[1], "r");
     if (fptr == NULL) {
