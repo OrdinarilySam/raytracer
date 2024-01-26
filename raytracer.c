@@ -5,6 +5,7 @@
 #include "raytracer.h"
 
 // todo: add ellipsoids
+// todo: output file does not include file extension
 
 int materialIndex = 0;
 int sphereIndex = -1;
