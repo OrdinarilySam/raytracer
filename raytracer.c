@@ -5,7 +5,6 @@
 #include "raytracer.h"
 
 // todo: find out how to dynamically size an array
-// todo: create exit function to free allocated memory
 // todo: add ellipsoids
 // todo: fix spheres disappearing in parallel view
 
@@ -116,9 +115,7 @@ int main(int argc, char *argv[]) {
                 ((newMaterial.b < 0) || (newMaterial.b > 1))
             ) {
                 printf("Material color must be between 0 and 1\n");
-                free(spheres);
-                free(materials);
-                return 1;
+                return exit(1);
             }
 
             // add the material to the array, resizing if necessary
@@ -145,17 +142,13 @@ int main(int argc, char *argv[]) {
             // ensure the sphere has size
             if (newSphere.r <= 0) {
                 printf("Sphere radius must be greater than 0\n");
-                free(spheres);
-                free(materials);
-                return 1;
+                return exit(1);
             }
 
             // make sure a material was assigned
             if (materialIndex == 0) {
                 printf("Must have at least one mtlcolor before a sphere.\n");
-                free(spheres);
-                free(materials);
-                return 1;
+                return exit(1);
             }
             newSphere.m = materialIndex;
 
@@ -196,9 +189,7 @@ int main(int argc, char *argv[]) {
     // check for missing eye parameter 
     if (!foundEye) {
         printf("Missing eye parameter\n");
-        free(spheres);
-        free(materials);
-        return 1;
+        return exit(1);
     }
 
     // check that viewdir has length
@@ -208,9 +199,7 @@ int main(int argc, char *argv[]) {
         powf(viewdir.z, 2.0)
     ) <= 0.0) {
         printf("viewdir must have length\n");
-        free(spheres);
-        free(materials);
-        return 1;
+        return exit(1);
     }
 
     // check that updir is normalized
@@ -220,25 +209,19 @@ int main(int argc, char *argv[]) {
         powf(updir.z, 2.0)
     ) != 1.0) {
         printf("updir must be a normalized vector\n");
-        free(spheres);
-        free(materials);
-        return 1;
+        return exit(1);
     }
 
     // check that 0 < hfov < 360
     if ((hfov <= 0) || (hfov >= 360)) {
         printf("hfov must be between 0 and 360 (exclusive)\n");
-        free(spheres);
-        free(materials);
-        return 1;
+        return exit(1);
     }
 
     // check that imsize is greater than 1 pixel
     if ((1 >= imgHeight) || (1 >= imgWidth)) {
         printf("Image width and height must be more than 1 pixel\n");
-        free(spheres);
-        free(materials);
-        return 1;
+        return exit(1);
     }
 
     // check that background colors are between 0 and 1
@@ -248,9 +231,7 @@ int main(int argc, char *argv[]) {
         ((bkgcolor.b < 0) || (bkgcolor.b > 1))
     ) {
         printf("Colors must be between 0 and 1 (inclusive)\n");
-        free(spheres);
-        free(materials);
-        return 1;
+        return exit(1);
     }
 
     // todo: make sure viewdir and updir aren't parallel or close to parallel
@@ -347,10 +328,9 @@ int main(int argc, char *argv[]) {
                 ul.z + (i * vChange.z) + (j * hChange.z)
             };
 
-            // for parallel projection use the pointThrough as the starting location
-            // and the viewdir as the direction
             RayType curRay;
             if (parallelViewEnabled == 1) {
+                // calculate the parallel view
                 curRay.pos = pointThrough;
 
                 CoordType parallelView = {
@@ -361,6 +341,7 @@ int main(int argc, char *argv[]) {
 
                 curRay.dir = parallelView;
             } else {
+                // calculate the perspective view
                 curRay.pos = eye;
 
                 float rayLength = sqrtf(
@@ -390,9 +371,7 @@ int main(int argc, char *argv[]) {
     FILE *outputFile = fopen(fileName, "w");
     if (fptr == NULL) {
         printf("Couldn't create file %s\n", argv[1]);
-        free(materials);
-        free(spheres);
-        return 1;
+        return exit(1);
     }
 
     fprintf(outputFile, "P3 %d %d %d\n", imgWidth, imgHeight, 255);
@@ -408,20 +387,17 @@ int main(int argc, char *argv[]) {
     }
 
     fclose(outputFile);
-    free(spheres);
-    free(materials);
-    return 0;
+    return exit(0);
 }
 
 
 ColorType traceRay(RayType ray) {
-    // todo: keep array of spheres that are hit by ray as well as distances
-
     float minimumDistance = MAXFLOAT;
     SphereType currentSphere;
 
     for (int i = 0; i <= sphereIndex; i++) {
         
+        // calculate components of distance solution
         float B = 2.0 * (
             (ray.dir.x * (ray.pos.x - spheres[i].center.x)) + 
             (ray.dir.y * (ray.pos.y - spheres[i].center.y)) + 
@@ -436,12 +412,13 @@ ColorType traceRay(RayType ray) {
         );
 
         // if discriminant is less than 0, ray does not hit object
-        if ((powf(B, 2.0) - (4 * C)) < 0) {
+        float discriminant = powf(B, 2.0) - (4 * C);
+        if (discriminant < 0) {
             continue;
         }
 
-        float plusT = (-B + sqrtf(powf(B, 2) - (4 * C))) / 2;
-        float minusT = (-B + sqrtf(powf(B, 2) - (4 * C))) / 2;
+        float plusT = (-B + sqrtf(discriminant)) / 2;
+        float minusT = (-B - sqrtf(discriminant)) / 2;
 
         if ((plusT > 0) && (plusT < minimumDistance)) {
             minimumDistance = plusT;
@@ -453,6 +430,8 @@ ColorType traceRay(RayType ray) {
             currentSphere = spheres[i];
         }
     } 
+
+    // check for unchanged value
     if (minimumDistance == MAXFLOAT) {
         return materials[0];
     }
@@ -462,4 +441,10 @@ ColorType traceRay(RayType ray) {
 
 ColorType shadeRay(SphereType closestSphere) {
     return materials[closestSphere.m];
+}
+
+int exit(int value) {
+    free(spheres);
+    free(materials);
+    return value;
 }
