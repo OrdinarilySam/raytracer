@@ -10,9 +10,9 @@ all: raytracer
 raytracer: raytracer.c raytracer.h
 	$(CXX) raytracer.c -o raytracer
 
-test:
+test: raytracer
 	for number in $$(seq 1 $(NUM_INPUTS)); do \
-		./raytracer input$$number.txt \
+		./raytracer input$$number.txt; \
 	done
 
 clean:
