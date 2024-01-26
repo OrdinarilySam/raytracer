@@ -3,11 +3,13 @@ viewdir 0.0 0.0 -1.0
 updir 0.0 1.0 0.0
 hfov 60.0
 imsize 500 400
+parallel
+distance 9 
 
 bkgcolor 0.5 0.2 0.2
 
-mtlcolor 0.0 0.0 1.0
-sphere 3.0 0.0 -10.0 4.0
+mtlcolor 0.365 0.447 0.345 
+sphere 3.0 0.0 -20.0 4.0
 mtlcolor 0.75 0.25 0
 sphere -2.0 0.0 -8.0 2.0
 mtlcolor 0.2 0.2 0.2
