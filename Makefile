@@ -1,7 +1,10 @@
-CXX=clang
-NUM_INPUTS=2
-FILE_NAME = example
-FILE_EXT = txt
+-include config.local.mk
+ifndef CXX
+    CXX=clang
+endif
+ifndef NUM_INPUTS
+    NUM_INPUTS=0
+endif
 
 .DEFAULT_GOAL := all
 
