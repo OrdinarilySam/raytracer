@@ -1,5 +1,7 @@
 CXX=clang
 NUM_INPUTS=2
+FILE_NAME = example
+FILE_EXT = txt
 
 .DEFAULT_GOAL := all
 
@@ -12,7 +14,7 @@ raytracer: raytracer.c raytracer.h
 
 test: raytracer
 	for number in $$(seq 1 $(NUM_INPUTS)); do \
-		./raytracer input$$number.txt; \
+		./raytracer $(FILE_NAME)$$number.$(FILE_EXT); \
 	done
 
 clean:
