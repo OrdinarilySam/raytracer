@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     short foundEye = 0;
     short foundViewdir = 0;
 
-    int d = 10;
+    int d = 1;
 
     /* ========================= INPUT HANDLING ========================= */
 
@@ -270,13 +270,17 @@ int main(int argc, char *argv[]) {
         (u.x * n.y) - (u.y * n.x),
     };
 
-    // ? print statements for debugging
-    // printf("u: %f %f %f\n", u.x, u.y, u.z);
-    // printf("v: %f %f %f\n", v.x, v.y, v.z);
 
     // calculate viewing window size
     float viewWidth = 2 * d * tanf((hfov * (M_PI / 180.0)) / 2.0);
     float viewHeight = viewWidth / ((float)imgWidth / (float)imgHeight);
+
+    // ? print statements for debugging
+    // printf("u: %f %f %f\n", u.x, u.y, u.z);
+    // printf("v: %f %f %f\n", v.x, v.y, v.z);
+    // printf("viewWidth: %f\n", viewWidth);
+    // printf("viewHeight: %f\n", viewHeight);
+    
 
     // calculate corners of viewing window
     CoordType ul = {
@@ -314,6 +318,15 @@ int main(int argc, char *argv[]) {
         (ll.z - ul.z) / (imgWidth - 1)
     };
 
+    // ? print statements for debugging
+    // printf("ul: %f %f %f\n", ul.x, ul.y, ul.z);
+    // printf("ur: %f %f %f\n", ur.x, ur.y, ur.z);
+    // printf("ll: %f %f %f\n", ll.x, ll.y, ll.z);
+    // printf("lr: %f %f %f\n", lr.x, lr.y, lr.z);
+
+    // printf("hChange: %f %f %f\n", hChange.x, hChange.y, hChange.z);
+    // printf("vChange: %f %f %f\n", vChange.x, vChange.y, vChange.z);
+
     // create image matrix
     ColorType image[imgHeight][imgWidth];
 
@@ -327,6 +340,8 @@ int main(int argc, char *argv[]) {
                 ul.y + (i * vChange.y) + (j * hChange.y),
                 ul.z + (i * vChange.z) + (j * hChange.z)
             };
+
+
 
             RayType curRay;
             if (parallelViewEnabled == 1) {
@@ -365,17 +380,32 @@ int main(int argc, char *argv[]) {
 
     /* ========================= OUTPUT TO FILE ========================= */
 
-    char fileName[100];
-    sprintf(fileName, "%s.ppm", argv[1]);
 
-    FILE *outputFile = fopen(fileName, "w");
+    // find where the dot is
+    char *dotPosition = strrchr(argv[1], '.');
+    
+    // create a new file name and name it accordingly
+    char newFileName[strlen(argv[1]) + strlen(".ppm") + 1];
+
+    if (dotPosition != NULL || dotPosition == argv[1]) {
+        strncpy(newFileName, argv[1], dotPosition - argv[1]);
+        strcpy(newFileName + (dotPosition - argv[1]), ".ppm");
+    } else {
+        strcpy(newFileName, argv[1]);
+        strcat(newFileName, ".ppm");
+    }
+
+    // open the new file for writing
+    FILE *outputFile = fopen(newFileName, "w");
     if (fptr == NULL) {
         printf("Couldn't create file %s\n", argv[1]);
         return cleanExit(1);
     }
 
+    // create the header for the ppm
     fprintf(outputFile, "P3 %d %d %d\n", imgWidth, imgHeight, 255);
 
+    // write the pixel contents to the file
     for (int i = 0; i < imgHeight; i++) {
         for (int j = 0; j < imgWidth; j++) {
             fprintf(outputFile, "%d %d %d\n", 
