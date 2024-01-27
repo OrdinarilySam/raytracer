@@ -13,7 +13,7 @@ raytracer: raytracer.c raytracer.h
 	$(CXX) raytracer.c -o raytracer
 
 test: raytracer
-	for number in $$(seq 1 $(NUM_INPUTS)); do \
+	@for number in $$(seq 1 $(NUM_INPUTS)); do \
 		./raytracer $(FILE_NAME)$$number.$(FILE_EXT); \
 	done
 
