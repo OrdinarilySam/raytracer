@@ -275,7 +275,11 @@ int main(int argc, char *argv[]) {
     float viewWidth = 2 * d * tanf((hfov * (M_PI / 180.0)) / 2.0);
     float viewHeight = viewWidth / ((float)imgWidth / (float)imgHeight);
 
+    // printf("width: %d\n", imgWidth);
+    // printf("height: %d\n", imgHeight);
+
     // ? print statements for debugging
+    // printf("n: %f %f %f\n", n.x, n.y, n.z);
     // printf("u: %f %f %f\n", u.x, u.y, u.z);
     // printf("v: %f %f %f\n", v.x, v.y, v.z);
     // printf("viewWidth: %f\n", viewWidth);
@@ -313,9 +317,9 @@ int main(int argc, char *argv[]) {
 
     // calculate the vertical offset
     CoordType vChange = {
-        (ll.x - ul.x) / (imgWidth - 1),
-        (ll.y - ul.y) / (imgWidth - 1),
-        (ll.z - ul.z) / (imgWidth - 1)
+        (ll.x - ul.x) / (imgHeight - 1),
+        (ll.y - ul.y) / (imgHeight - 1),
+        (ll.z - ul.z) / (imgHeight - 1)
     };
 
     // ? print statements for debugging
