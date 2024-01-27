@@ -2,9 +2,6 @@
 ifndef CXX
     CXX=clang
 endif
-ifndef NUM_INPUTS
-    NUM_INPUTS=1
-endif
 
 .DEFAULT_GOAL := all
 
