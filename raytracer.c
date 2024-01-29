@@ -341,21 +341,21 @@ int main(int argc, char *argv[]) {
         frustumHeight = frustumWidth / ((float)imgWidth / (float)imgHeight );
 
         // calculate corners of viewing window
-        ul.x = -(frustumWidth / 2) * u.x + (frustumHeight / 2) * v.x;
-        ul.y = -(frustumWidth / 2) * u.y + (frustumHeight / 2) * v.y;
-        ul.z = -(frustumWidth / 2) * u.z + (frustumHeight / 2) * v.z;
+        ul.x = eye.x - (frustumWidth / 2) * u.x + (frustumHeight / 2) * v.x;
+        ul.y = eye.y - (frustumWidth / 2) * u.y + (frustumHeight / 2) * v.y;
+        ul.z = eye.z - (frustumWidth / 2) * u.z + (frustumHeight / 2) * v.z;
 
-        ur.x = (frustumWidth / 2) * u.x + (frustumHeight / 2) * v.x;
-        ur.y = (frustumWidth / 2) * u.y + (frustumHeight / 2) * v.y;
-        ur.z = (frustumWidth / 2) * u.z + (frustumHeight / 2) * v.z;
+        ur.x = eye.x + (frustumWidth / 2) * u.x + (frustumHeight / 2) * v.x;
+        ur.y = eye.y + (frustumWidth / 2) * u.y + (frustumHeight / 2) * v.y;
+        ur.z = eye.z + (frustumWidth / 2) * u.z + (frustumHeight / 2) * v.z;
 
-        ll.x = -(frustumWidth / 2) * u.x - (frustumHeight / 2) * v.x;
-        ll.y = -(frustumWidth / 2) * u.y - (frustumHeight / 2) * v.y;
-        ll.z = -(frustumWidth / 2) * u.z - (frustumHeight / 2) * v.z;
+        ll.x = eye.x - (frustumWidth / 2) * u.x - (frustumHeight / 2) * v.x;
+        ll.y = eye.y - (frustumWidth / 2) * u.y - (frustumHeight / 2) * v.y;
+        ll.z = eye.z - (frustumWidth / 2) * u.z - (frustumHeight / 2) * v.z;
 
-        lr.x = (frustumWidth / 2) * u.x - (frustumHeight / 2) * v.x;
-        lr.y = (frustumWidth / 2) * u.y - (frustumHeight / 2) * v.y;
-        lr.z = (frustumWidth / 2) * u.z - (frustumHeight / 2) * v.z;
+        lr.x = eye.x + (frustumWidth / 2) * u.x - (frustumHeight / 2) * v.x;
+        lr.y = eye.y + (frustumWidth / 2) * u.y - (frustumHeight / 2) * v.y;
+        lr.z = eye.z + (frustumWidth / 2) * u.z - (frustumHeight / 2) * v.z;
 
         // Calculate the horizontal and vertical offset per pixel
         hChange.x = (ur.x - ul.x) / (imgWidth - 1);
