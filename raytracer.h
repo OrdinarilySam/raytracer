@@ -8,9 +8,9 @@ typedef struct {
 
 typedef struct {
     CoordType center;
-    float r;
+    CoordType radius;
     int m;
-} SphereType;
+} EllipsoidType;
 
 typedef struct {
     CoordType pos;
@@ -19,5 +19,5 @@ typedef struct {
 
 
 ColorType traceRay(RayType ray);
-ColorType shadeRay(SphereType closestSphere);
+ColorType shadeRay(EllipsoidType closestEllipsoid);
 int cleanExit(int value);

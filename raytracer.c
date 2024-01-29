@@ -4,12 +4,10 @@
 #include <math.h>
 #include "raytracer.h"
 
-// todo: add ellipsoids
-
 int materialIndex = 0;
-int sphereIndex = -1;
+int ellipsoidIndex = -1;
 ColorType *materials;
-SphereType *spheres;
+EllipsoidType *ellipsoids;
 
 
 int main(int argc, char *argv[]) {
@@ -18,8 +16,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // count number of spheres and materials
-    int sphereCount = 0;
+    // count number of ellipsoids and materials
+    int ellipsoidCount = 0;
     int materialCount = 1;
 
     char buffer[100];
@@ -30,7 +28,7 @@ int main(int argc, char *argv[]) {
     }
     while (fscanf(fscan, "%s", buffer) != EOF) {
         if (strcmp(buffer, "sphere") == 0) {
-            sphereCount++;
+            ellipsoidCount++;
         } else if (strcmp(buffer, "mtlcolor") == 0) {
             materialCount++;
         }
@@ -45,8 +43,8 @@ int main(int argc, char *argv[]) {
     }
 
     // allocate sphere array
-    spheres = malloc(sphereCount * sizeof(SphereType));
-    if (spheres == NULL) {
+    ellipsoids = malloc(ellipsoidCount * sizeof(EllipsoidType));
+    if (ellipsoids == NULL) {
         printf("Failed to initialize an object array. Exiting...\n");
         free(materials);
         return 1;
@@ -141,14 +139,19 @@ int main(int argc, char *argv[]) {
             
         } else if (strcmp(buffer, "sphere") == 0) {
             // create the new sphere
-            SphereType newSphere;
+            EllipsoidType newSphere;
             fscanf(fptr, "%f", &newSphere.center.x);
             fscanf(fptr, "%f", &newSphere.center.y);
             fscanf(fptr, "%f", &newSphere.center.z);
-            fscanf(fptr, "%f", &newSphere.r);
+
+            float radius;
+            fscanf(fptr, "%f", &radius);
+            newSphere.radius.x = radius;
+            newSphere.radius.y = radius;
+            newSphere.radius.z = radius;
 
             // ensure the sphere has size
-            if (newSphere.r <= 0) {
+            if (radius <= 0) {
                 printf("Sphere radius must be greater than 0\n");
                 return cleanExit(1);
             }
@@ -160,9 +163,44 @@ int main(int argc, char *argv[]) {
             }
             newSphere.m = materialIndex;
 
-            // add the sphere to the array, resizing if necessary
-            sphereIndex++;
-            spheres[sphereIndex] = newSphere;
+            // add the sphere to the array
+            ellipsoidIndex++;
+            ellipsoids[ellipsoidIndex] = newSphere;
+        } else if (strcmp(buffer, "ellipsoid") == 0) {
+            // create the new ellipsoid
+            EllipsoidType newEllipsoid;
+            fscanf(fptr, "%f", &newEllipsoid.center.x);
+            fscanf(fptr, "%f", &newEllipsoid.center.y);
+            fscanf(fptr, "%f", &newEllipsoid.center.z);
+
+            fscanf(fptr, "%f", &newEllipsoid.radius.x);
+            fscanf(fptr, "%f", &newEllipsoid.radius.y);
+            fscanf(fptr, "%f", &newEllipsoid.radius.z);
+
+            // ensure the ellipsoid has size
+            if (newEllipsoid.radius.x <= 0) {
+                printf("Ellipsoid radii must be greater than 0\n");
+                return cleanExit(1);
+            }
+            if (newEllipsoid.radius.y <= 0) {
+                printf("Ellipsoid radii must be greater than 0\n");
+                return cleanExit(1);
+            }
+            if (newEllipsoid.radius.z <= 0) {
+                printf("Ellipsoid radii must be greater than 0\n");
+                return cleanExit(1);
+            }
+
+            // make sure a material was assigned
+            if (materialIndex == 0) {
+                printf("Must have at least one mtlcolor before an ellipsoid.\n");
+                return cleanExit(1);
+            }
+            newEllipsoid.m = materialIndex;
+
+            // add the sphere to the array
+            ellipsoidIndex++;
+            ellipsoids[ellipsoidIndex] = newEllipsoid;
         }
     }
 
@@ -178,9 +216,9 @@ int main(int argc, char *argv[]) {
     // for (int i = 1; i <= materialIndex; i++) {
     //     printf("Material: %f %f %f\n", materials[i].r, materials[i].g, materials[i].b);
     // }
-    // for (int i = 0; i <= sphereIndex; i++) {
+    // for (int i = 0; i <= ellipsoidIndex; i++) {
     //     printf("Sphere: %f %f %f %f mat: %d\n", 
-    //         spheres[i].center.x, spheres[i].center.y, spheres[i].center.z, spheres[i].r, spheres[i].m);
+    //         ellipsoids[i].center.x, ellipsoids[i].center.y, ellipsoids[i].center.z, ellipsoids[i].r, ellipsoids[i].m);
     // }
 
     /* ========================= ERROR CHECKING ========================= */
@@ -426,41 +464,62 @@ int main(int argc, char *argv[]) {
 
 ColorType traceRay(RayType ray) {
     float minimumDistance = MAXFLOAT;
-    SphereType currentSphere;
+    EllipsoidType currentEllipsoid;
 
-    for (int i = 0; i <= sphereIndex; i++) {
+    for (int i = 0; i <= ellipsoidIndex; i++) {
         
         // calculate components of distance solution
-        float B = 2.0 * (
-            (ray.dir.x * (ray.pos.x - spheres[i].center.x)) + 
-            (ray.dir.y * (ray.pos.y - spheres[i].center.y)) + 
-            (ray.dir.z * (ray.pos.z - spheres[i].center.z)) 
+        float A = (
+            powf(ray.dir.x / ellipsoids[i].radius.x, 2.0) + 
+            powf(ray.dir.y / ellipsoids[i].radius.y, 2.0) + 
+            powf(ray.dir.z / ellipsoids[i].radius.z, 2.0) 
         );
 
+        // float B = 2.0 * (
+        //     (ray.dir.x * (ray.pos.x - ellipsoids[i].center.x)) + 
+        //     (ray.dir.y * (ray.pos.y - ellipsoids[i].center.y)) + 
+        //     (ray.dir.z * (ray.pos.z - ellipsoids[i].center.z)) 
+        // );
+
+        float B = 2.0 * (
+            (((ray.pos.x - ellipsoids[i].center.x) * ray.dir.x) /
+            powf(ellipsoids[i].radius.x, 2.0)) +
+            (((ray.pos.y - ellipsoids[i].center.y) * ray.dir.y) /
+            powf(ellipsoids[i].radius.y, 2.0)) +
+            (((ray.pos.z - ellipsoids[i].center.z) * ray.dir.z) /
+            powf(ellipsoids[i].radius.z, 2.0))
+        );
+
+        // float C = (
+        //     powf(ray.pos.x - ellipsoids[i].center.x, 2.0) +
+        //     powf(ray.pos.y - ellipsoids[i].center.y, 2.0) +
+        //     powf(ray.pos.z - ellipsoids[i].center.z, 2.0) -
+        //     powf(ellipsoids[i].r, 2.0)
+        // );
+
         float C = (
-            powf(ray.pos.x - spheres[i].center.x, 2.0) +
-            powf(ray.pos.y - spheres[i].center.y, 2.0) +
-            powf(ray.pos.z - spheres[i].center.z, 2.0) -
-            powf(spheres[i].r, 2.0)
+            powf((ray.pos.x - ellipsoids[i].center.x) / ellipsoids[i].radius.x, 2.0) +
+            powf((ray.pos.y - ellipsoids[i].center.y) / ellipsoids[i].radius.y, 2.0) +
+            powf((ray.pos.z - ellipsoids[i].center.z) / ellipsoids[i].radius.z, 2.0) - 1 
         );
 
         // if discriminant is less than 0, ray does not hit object
-        float discriminant = powf(B, 2.0) - (4 * C);
+        float discriminant = powf(B, 2.0) - (4 * A * C);
         if (discriminant < 0) {
             continue;
         }
 
-        float plusT = (-B + sqrtf(discriminant)) / 2;
-        float minusT = (-B - sqrtf(discriminant)) / 2;
+        float plusT = (-B + sqrtf(discriminant)) / (2 * A);
+        float minusT = (-B - sqrtf(discriminant)) / (2 * A);
 
         if ((plusT > 0) && (plusT < minimumDistance)) {
             minimumDistance = plusT;
-            currentSphere = spheres[i];
+            currentEllipsoid = ellipsoids[i];
         }
 
         if ((minusT > 0) && (minusT < minimumDistance)) {
             minimumDistance = minusT;
-            currentSphere = spheres[i];
+            currentEllipsoid = ellipsoids[i];
         }
     } 
 
@@ -468,16 +527,16 @@ ColorType traceRay(RayType ray) {
     if (minimumDistance == MAXFLOAT) {
         return materials[0];
     }
-    return shadeRay(currentSphere);
+    return shadeRay(currentEllipsoid);
 }
 
 
-ColorType shadeRay(SphereType closestSphere) {
-    return materials[closestSphere.m];
+ColorType shadeRay(EllipsoidType closestEllipsoid) {
+    return materials[closestEllipsoid.m];
 }
 
 int cleanExit(int value) {
-    free(spheres);
+    free(ellipsoids);
     free(materials);
     return value;
 }
