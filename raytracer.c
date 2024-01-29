@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     while (fscanf(fscan, "%s", buffer) != EOF) {
-        if (strcmp(buffer, "sphere") == 0) {
+        if (strcmp(buffer, "sphere") == 0 || strcmp(buffer, "ellipse") == 0) {
             ellipsoidCount++;
         } else if (strcmp(buffer, "mtlcolor") == 0) {
             materialCount++;
@@ -55,16 +55,11 @@ int main(int argc, char *argv[]) {
     CoordType viewdir = {0,0,0};
     CoordType updir = {0,0,0};
     float hfov = -1;
-    int imgWidth = -1;
-    int imgHeight = -1;
+    int imgWidth, imgHeight = -1;
     ColorType bkgcolor = {-1, -1, -1};
 
-    short parallelViewEnabled = 0;
-
-    short foundEye = 0;
-    short foundViewdir = 0;
-
-    int d = 1;
+    short parallelViewEnabled, foundEye = 0;
+    float frustumWidth, frustumHeight;
 
     /* ========================= INPUT HANDLING ========================= */
 
@@ -83,10 +78,7 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(buffer, "parallel") == 0) {
             // create a parallel view image
             parallelViewEnabled = 1;
-
-        } else if (strcmp(buffer, "distance") == 0) {
-            // set the distance
-            fscanf(fptr, "%d", &d);
+            fscanf(fptr, "%f", &frustumWidth);
 
         } else if (strcmp(buffer, "viewdir") == 0) {
             // set the viewdir vector
@@ -166,7 +158,7 @@ int main(int argc, char *argv[]) {
             // add the sphere to the array
             ellipsoidIndex++;
             ellipsoids[ellipsoidIndex] = newSphere;
-        } else if (strcmp(buffer, "ellipsoid") == 0) {
+        } else if (strcmp(buffer, "ellipse") == 0) {
             // create the new ellipsoid
             EllipsoidType newEllipsoid;
             fscanf(fptr, "%f", &newEllipsoid.center.x);
@@ -206,21 +198,6 @@ int main(int argc, char *argv[]) {
 
     fclose(fptr);
 
-    // ? print statements for debugging
-    // printf("Eye: %f %f %f\n", eye.x, eye.y, eye.z);
-    // printf("Viewdir: %f %f %f\n", viewdir.x, viewdir.y, viewdir.z);
-    // printf("Updir: %f %f %f\n", updir.x, updir.y, updir.z);
-    // printf("Hfov: %f\n", hfov);
-    // printf("Imsize: %d %d\n", imgWidth, imgHeight);
-    // printf("Background color: %f %f %f\n", materials[0].r, materials[0].g, materials[0].b);
-    // for (int i = 1; i <= materialIndex; i++) {
-    //     printf("Material: %f %f %f\n", materials[i].r, materials[i].g, materials[i].b);
-    // }
-    // for (int i = 0; i <= ellipsoidIndex; i++) {
-    //     printf("Sphere: %f %f %f %f mat: %d\n", 
-    //         ellipsoids[i].center.x, ellipsoids[i].center.y, ellipsoids[i].center.z, ellipsoids[i].r, ellipsoids[i].m);
-    // }
-
     /* ========================= ERROR CHECKING ========================= */
 
     // check for missing eye parameter 
@@ -230,28 +207,40 @@ int main(int argc, char *argv[]) {
     }
 
     // check that viewdir has length
-    if (sqrtf(
-        powf(viewdir.x, 2.0) +
-        powf(viewdir.y, 2.0) +
+    float viewdirLength = sqrtf(
+        powf(viewdir.x, 2.0) + 
+        powf(viewdir.y, 2.0) + 
         powf(viewdir.z, 2.0)
-    ) <= 0.0) {
+    );
+    if (viewdirLength <= 0.0) {
         printf("viewdir must have length\n");
         return cleanExit(1);
     }
 
-    // check that updir is normalized
-    if (sqrtf(
+    // check that updir has length
+    float updirLength = sqrtf(
         powf(updir.x, 2.0) +
         powf(updir.y, 2.0) +
         powf(updir.z, 2.0)
-    ) != 1.0) {
-        printf("updir must be a normalized vector\n");
+    );
+    if (updirLength <= 0.0) {
+        printf("updir must have length\n");
+        return cleanExit(1);
+    }
+    // normalize updir
+    updir.x /= updirLength;
+    updir.y /= updirLength;
+    updir.z /= updirLength;
+
+    // check that 0 < hfov < 360
+    if (((hfov <= 0) || (hfov >= 360)) && !parallelViewEnabled) {
+        printf("hfov must be between 0 and 360 (exclusive)\n");
         return cleanExit(1);
     }
 
-    // check that 0 < hfov < 360
-    if ((hfov <= 0) || (hfov >= 360)) {
-        printf("hfov must be between 0 and 360 (exclusive)\n");
+    // check for positive frustum width
+    if (parallelViewEnabled && (frustumWidth <= 0)) {
+        printf("frustum width must be greater than 0\n");
         return cleanExit(1);
     }
 
@@ -271,17 +260,10 @@ int main(int argc, char *argv[]) {
         return cleanExit(1);
     }
 
-    // todo: make sure viewdir and updir aren't parallel or close to parallel
-
     /* ========================= CALCULATE VARIABLES ========================= */
 
     // create a normalized viewingdir vector
-    float viewdirLength = sqrtf(
-        powf(viewdir.x, 2.0) + 
-        powf(viewdir.y, 2.0) + 
-        powf(viewdir.z, 2.0)
-    );
-    CoordType n = {
+    CoordType w = {
         viewdir.x /= viewdirLength,
         viewdir.y /= viewdirLength,
         viewdir.z /= viewdirLength
@@ -289,84 +271,102 @@ int main(int argc, char *argv[]) {
 
     // u is the cross product of viewdir and updir
     CoordType u = {
-        (n.y * updir.z) - (n.z * updir.y),
-        (n.z * updir.x) - (n.x * updir.z),
-        (n.x * updir.y) - (n.y * updir.x)
+        (w.y * updir.z) - (w.z * updir.y),
+        (w.z * updir.x) - (w.x * updir.z),
+        (w.x * updir.y) - (w.y * updir.x)
     };
 
     // normalize u
     float uLength = sqrtf(powf(u.x, 2.0) + powf(u.y, 2.0) + powf(u.z, 2.0));
+
+    if (uLength <= 0.001) {
+        printf("the viewing and up directions are too close to parallel\n");
+        return cleanExit(1);
+    }
+
     u.x /= uLength;
     u.y /= uLength;
     u.z /= uLength;
 
     // v is the cross product of u and viewdir
     CoordType v = {
-        (u.y * n.z) - (u.z * n.y),
-        (u.z * n.x) - (u.x * n.z),
-        (u.x * n.y) - (u.y * n.x),
+        (u.y * w.z) - (u.z * w.y),
+        (u.z * w.x) - (u.x * w.z),
+        (u.x * w.y) - (u.y * w.x),
     };
 
+    float viewWidth, viewHeight;
 
-    // calculate viewing window size
-    float viewWidth = 2 * d * tanf((hfov * (M_PI / 180.0)) / 2.0);
-    float viewHeight = viewWidth / ((float)imgWidth / (float)imgHeight);
+    CoordType ul, ur, ll, lr;
+    CoordType hChange, vChange;
 
-    // printf("width: %d\n", imgWidth);
-    // printf("height: %d\n", imgHeight);
 
-    // ? print statements for debugging
-    // printf("n: %f %f %f\n", n.x, n.y, n.z);
-    // printf("u: %f %f %f\n", u.x, u.y, u.z);
-    // printf("v: %f %f %f\n", v.x, v.y, v.z);
-    // printf("viewWidth: %f\n", viewWidth);
-    // printf("viewHeight: %f\n", viewHeight);
-    
+    if (!parallelViewEnabled) {
+        /* ========================= PERSPECTIVE PROJECTION ========================= */
 
-    // calculate corners of viewing window
-    CoordType ul = {
-        eye.x + (d * n.x) - ((viewWidth / 2) * u.x) + ((viewHeight / 2) * v.x),
-        eye.y + (d * n.y) - ((viewWidth / 2) * u.y) + ((viewHeight / 2) * v.y),
-        eye.z + (d * n.z) - ((viewWidth / 2) * u.z) + ((viewHeight / 2) * v.z)
-    };
-    CoordType ur = {
-        eye.x + (d * n.x) + ((viewWidth / 2) * u.x) + ((viewHeight / 2) * v.x),
-        eye.y + (d * n.y) + ((viewWidth / 2) * u.y) + ((viewHeight / 2) * v.y),
-        eye.z + (d * n.z) + ((viewWidth / 2) * u.z) + ((viewHeight / 2) * v.z)
-    };
-    CoordType ll = {
-        eye.x + (d * n.x) - ((viewWidth / 2) * u.x) - ((viewHeight / 2) * v.x),
-        eye.y + (d * n.y) - ((viewWidth / 2) * u.y) - ((viewHeight / 2) * v.y),
-        eye.z + (d * n.z) - ((viewWidth / 2) * u.z) - ((viewHeight / 2) * v.z)
-    };
-    CoordType lr = {
-        eye.x + (d * n.x) + ((viewWidth / 2) * u.x) - ((viewHeight / 2) * v.x),
-        eye.y + (d * n.y) + ((viewWidth / 2) * u.y) - ((viewHeight / 2) * v.y),
-        eye.z + (d * n.z) + ((viewWidth / 2) * u.z) - ((viewHeight / 2) * v.z)
-    };
+        // calculate viewing window size
+        viewWidth = 2 * tanf((hfov * (M_PI / 180.0)) / 2.0);
+        viewHeight = viewWidth / ((float)imgWidth / (float)imgHeight);
 
-    // calculate the horizontal offset
-    CoordType hChange = {
-        (ur.x - ul.x) / (imgWidth - 1),
-        (ur.y - ul.y) / (imgWidth - 1),
-        (ur.z - ul.z) / (imgWidth - 1)
-    };
+        // calculate corners of viewing window
+        ul.x = eye.x + w.x - (viewWidth / 2) * u.x + (viewHeight / 2) * v.x;
+        ul.y = eye.y + w.y - (viewWidth / 2) * u.y + (viewHeight / 2) * v.y;
+        ul.z = eye.z + w.z - (viewWidth / 2) * u.z + (viewHeight / 2) * v.z;
 
-    // calculate the vertical offset
-    CoordType vChange = {
-        (ll.x - ul.x) / (imgHeight - 1),
-        (ll.y - ul.y) / (imgHeight - 1),
-        (ll.z - ul.z) / (imgHeight - 1)
-    };
+        ur.x = eye.x + w.x + (viewWidth / 2) * u.x + (viewHeight / 2) * v.x;
+        ur.y = eye.y + w.y + (viewWidth / 2) * u.y + (viewHeight / 2) * v.y;
+        ur.z = eye.z + w.z + (viewWidth / 2) * u.z + (viewHeight / 2) * v.z;
 
-    // ? print statements for debugging
-    // printf("ul: %f %f %f\n", ul.x, ul.y, ul.z);
-    // printf("ur: %f %f %f\n", ur.x, ur.y, ur.z);
-    // printf("ll: %f %f %f\n", ll.x, ll.y, ll.z);
-    // printf("lr: %f %f %f\n", lr.x, lr.y, lr.z);
+        ll.x = eye.x + w.x - (viewWidth / 2) * u.x - (viewHeight / 2) * v.x;
+        ll.y = eye.y + w.y - (viewWidth / 2) * u.y - (viewHeight / 2) * v.y;
+        ll.z = eye.z + w.z - (viewWidth / 2) * u.z - (viewHeight / 2) * v.z;
 
-    // printf("hChange: %f %f %f\n", hChange.x, hChange.y, hChange.z);
-    // printf("vChange: %f %f %f\n", vChange.x, vChange.y, vChange.z);
+        lr.x = eye.x + w.x + (viewWidth / 2) * u.x - (viewHeight / 2) * v.x;
+        lr.y = eye.y + w.y + (viewWidth / 2) * u.y - (viewHeight / 2) * v.y;
+        lr.z = eye.z + w.z + (viewWidth / 2) * u.z - (viewHeight / 2) * v.z;
+
+        // calculate the horizontal offset
+        hChange.x = (ur.x - ul.x) / (imgWidth - 1);
+        hChange.y = (ur.y - ul.y) / (imgWidth - 1);
+        hChange.z = (ur.z - ul.z) / (imgWidth - 1);
+
+        // calculate the vertical offset
+        vChange.x = (ll.x - ul.x) / (imgHeight - 1);
+        vChange.y = (ll.y - ul.y) / (imgHeight - 1);
+        vChange.z = (ll.z - ul.z) / (imgHeight - 1);
+
+    } else {
+        /* ========================= PARALLEL PROJECTION ========================= */
+
+        frustumHeight = frustumWidth / ((float)imgWidth / (float)imgHeight );
+
+        // calculate corners of viewing window
+        ul.x = -(frustumWidth / 2) * u.x + (frustumHeight / 2) * v.x;
+        ul.y = -(frustumWidth / 2) * u.y + (frustumHeight / 2) * v.y;
+        ul.z = -(frustumWidth / 2) * u.z + (frustumHeight / 2) * v.z;
+
+        ur.x = (frustumWidth / 2) * u.x + (frustumHeight / 2) * v.x;
+        ur.y = (frustumWidth / 2) * u.y + (frustumHeight / 2) * v.y;
+        ur.z = (frustumWidth / 2) * u.z + (frustumHeight / 2) * v.z;
+
+        ll.x = -(frustumWidth / 2) * u.x - (frustumHeight / 2) * v.x;
+        ll.y = -(frustumWidth / 2) * u.y - (frustumHeight / 2) * v.y;
+        ll.z = -(frustumWidth / 2) * u.z - (frustumHeight / 2) * v.z;
+
+        lr.x = (frustumWidth / 2) * u.x - (frustumHeight / 2) * v.x;
+        lr.y = (frustumWidth / 2) * u.y - (frustumHeight / 2) * v.y;
+        lr.z = (frustumWidth / 2) * u.z - (frustumHeight / 2) * v.z;
+
+        // Calculate the horizontal and vertical offset per pixel
+        hChange.x = (ur.x - ul.x) / (imgWidth - 1);
+        hChange.y = (ur.y - ul.y) / (imgWidth - 1);
+        hChange.z = (ur.z - ul.z) / (imgWidth - 1);
+        
+        vChange.x = (ll.x - ul.x) / (imgHeight - 1);
+        vChange.y = (ll.y - ul.y) / (imgHeight - 1);
+        vChange.z = (ll.z - ul.z) / (imgHeight - 1);
+
+    }
 
     // create image matrix
     ColorType image[imgHeight][imgWidth];
@@ -390,9 +390,9 @@ int main(int argc, char *argv[]) {
                 curRay.pos = pointThrough;
 
                 CoordType parallelView = {
-                    n.x,
-                    n.y,
-                    n.z
+                    w.x,
+                    w.y,
+                    w.z
                 };
 
                 curRay.dir = parallelView;
@@ -475,12 +475,6 @@ ColorType traceRay(RayType ray) {
             powf(ray.dir.z / ellipsoids[i].radius.z, 2.0) 
         );
 
-        // float B = 2.0 * (
-        //     (ray.dir.x * (ray.pos.x - ellipsoids[i].center.x)) + 
-        //     (ray.dir.y * (ray.pos.y - ellipsoids[i].center.y)) + 
-        //     (ray.dir.z * (ray.pos.z - ellipsoids[i].center.z)) 
-        // );
-
         float B = 2.0 * (
             (((ray.pos.x - ellipsoids[i].center.x) * ray.dir.x) /
             powf(ellipsoids[i].radius.x, 2.0)) +
@@ -489,13 +483,6 @@ ColorType traceRay(RayType ray) {
             (((ray.pos.z - ellipsoids[i].center.z) * ray.dir.z) /
             powf(ellipsoids[i].radius.z, 2.0))
         );
-
-        // float C = (
-        //     powf(ray.pos.x - ellipsoids[i].center.x, 2.0) +
-        //     powf(ray.pos.y - ellipsoids[i].center.y, 2.0) +
-        //     powf(ray.pos.z - ellipsoids[i].center.z, 2.0) -
-        //     powf(ellipsoids[i].r, 2.0)
-        // );
 
         float C = (
             powf((ray.pos.x - ellipsoids[i].center.x) / ellipsoids[i].radius.x, 2.0) +
