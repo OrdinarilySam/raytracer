@@ -329,12 +329,11 @@ int main(int argc, char *argv[]) {
         lr.y = eye.y + w.y + (viewWidth / 2) * u.y - (viewHeight / 2) * v.y;
         lr.z = eye.z + w.z + (viewWidth / 2) * u.z - (viewHeight / 2) * v.z;
 
-        // calculate the horizontal offset
+        // calculate the horizontal and vertical offset per pixel
         hChange.x = (ur.x - ul.x) / (imgWidth - 1);
         hChange.y = (ur.y - ul.y) / (imgWidth - 1);
         hChange.z = (ur.z - ul.z) / (imgWidth - 1);
 
-        // calculate the vertical offset
         vChange.x = (ll.x - ul.x) / (imgHeight - 1);
         vChange.y = (ll.y - ul.y) / (imgHeight - 1);
         vChange.z = (ll.z - ul.z) / (imgHeight - 1);
@@ -361,7 +360,7 @@ int main(int argc, char *argv[]) {
         lr.y = eye.y + (frustumWidth / 2) * u.y - (frustumHeight / 2) * v.y;
         lr.z = eye.z + (frustumWidth / 2) * u.z - (frustumHeight / 2) * v.z;
 
-        // Calculate the horizontal and vertical offset per pixel
+        // calculate the horizontal and vertical offset per pixel
         hChange.x = (ur.x - ul.x) / (imgWidth - 1);
         hChange.y = (ur.y - ul.y) / (imgWidth - 1);
         hChange.z = (ur.z - ul.z) / (imgWidth - 1);
