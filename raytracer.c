@@ -237,8 +237,8 @@ int main(int argc, char *argv[]) {
     updir.z /= updirLength;
 
     // check that 0 < hfov < 360
-    if (((hfov <= 0) || (hfov >= 360)) && !parallelViewEnabled) {
-        printf("hfov must be between 0 and 360 (exclusive)\n");
+    if (((hfov <= 0) || (hfov >= 180)) && !parallelViewEnabled) {
+        printf("hfov must be between 0 and 180 (exclusive)\n");
         return cleanExit(1);
     }
 
