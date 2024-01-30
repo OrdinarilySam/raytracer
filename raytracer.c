@@ -304,7 +304,6 @@ int main(int argc, char *argv[]) {
     CoordType ul, ur, ll, lr;
     CoordType hChange, vChange;
 
-
     if (!parallelViewEnabled) {
         /* ========================= PERSPECTIVE PROJECTION ========================= */
 
@@ -385,9 +384,8 @@ int main(int argc, char *argv[]) {
                 ul.z + (i * vChange.z) + (j * hChange.z)
             };
 
-
-
             RayType curRay;
+
             if (parallelViewEnabled == 1) {
                 // calculate the parallel view
                 curRay.pos = pointThrough;
@@ -423,7 +421,6 @@ int main(int argc, char *argv[]) {
     }
 
     /* ========================= OUTPUT TO FILE ========================= */
-
 
     // find where the dot is
     char *dotPosition = strrchr(argv[1], '.');
