@@ -5,17 +5,17 @@ endif
 
 .DEFAULT_GOAL := all
 
-all: raytracer 
+all: raytracer1a
 
 .PHONY: all clean test
 
-raytracer: raytracer.c raytracer.h
-	$(CXX) raytracer.c -o raytracer
+raytracer1a: raytracer.c raytracer.h
+	$(CXX) raytracer.c -o raytracer1a
 
-test: raytracer
+test: raytracer1a
 	@for number in $$(seq 1 $(NUM_INPUTS)); do \
-		./raytracer $(FILE_NAME)$$number.$(FILE_EXT); \
+		./raytracer1a $(FILE_NAME)$$number.$(FILE_EXT); \
 	done
 
 clean:
-	rm -f raytracer *.ppm
+	rm -f raytracer1a *.ppm
