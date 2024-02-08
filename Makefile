@@ -1,4 +1,4 @@
--include config.default.mk
+-include config.local.mk
 ifndef CXX
     CXX=clang
 endif
