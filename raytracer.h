@@ -1,23 +1,23 @@
-typedef struct {
-    float r, g, b;
-} ColorType;
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "vec3.h"
 
-typedef struct {
-    float x, y, z;
-} CoordType;
-
-typedef struct {
-    CoordType center;
-    CoordType radius;
+typedef struct
+{
+    Vec3 center;
+    Vec3 radius;
     int m;
 } EllipsoidType;
 
-typedef struct {
-    CoordType pos;
-    CoordType dir;
+typedef struct
+{
+    Vec3 pos;
+    Vec3 dir;
 } RayType;
 
 
-ColorType traceRay(RayType ray);
-ColorType shadeRay(EllipsoidType closestEllipsoid);
+Vec3 *traceRay(RayType *ray);
+Vec3 *shadeRay(EllipsoidType *closestEllipsoid);
 int cleanExit(int value);
