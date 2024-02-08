@@ -16,6 +16,6 @@ typedef struct {
   Vec3 dir;
 } RayType;
 
-Vec3 *traceRay(RayType *ray);
-Vec3 *shadeRay(EllipsoidType *closestEllipsoid);
+Vec3 traceRay(RayType ray);
+Vec3 shadeRay(EllipsoidType closestEllipsoid);
 int cleanExit(int value);

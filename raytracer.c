@@ -276,27 +276,27 @@ int main(int argc, char *argv[]) {
     Vec3 scaledU = scale(&u, halfViewWidth);
     Vec3 scaledV = scale(&v, halfViewHeight);
 
-    ul = add(&eye, &w);
-    ul = sub(&ul, &scaledU);
-    ul = add(&ul, &scaledV);
+    ul = pointAdd(&eye, &w);
+    ul = pointSub(&ul, &scaledU);
+    ul = pointAdd(&ul, &scaledV);
 
-    ur = add(&eye, &w);
-    ur = add(&ur, &scaledU);
-    ur = add(&ur, &scaledV);
+    ur = pointAdd(&eye, &w);
+    ur = pointAdd(&ur, &scaledU);
+    ur = pointAdd(&ur, &scaledV);
 
-    ll = add(&eye, &w);
-    ll = sub(&ll, &scaledU);
-    ll = sub(&ll, &scaledV);
+    ll = pointAdd(&eye, &w);
+    ll = pointSub(&ll, &scaledU);
+    ll = pointSub(&ll, &scaledV);
 
-    lr = add(&eye, &w);
-    lr = add(&lr, &scaledU);
-    lr = sub(&lr, &scaledV);
+    lr = pointAdd(&eye, &w);
+    lr = pointAdd(&lr, &scaledU);
+    lr = pointSub(&lr, &scaledV);
 
     // calculate the horizontal and vertical offset per pixel
-    hChange = sub(&ur, &ul);
+    hChange = pointSub(&ur, &ul);
     hChange = scale(&hChange, 1.0 / (imgWidth - 1));
 
-    vChange = sub(&ll, &ul);
+    vChange = pointSub(&ll, &ul);
     vChange = scale(&vChange, 1.0 / (imgHeight - 1));
   } else {
     /* ========================= PARALLEL PROJECTION =========================
@@ -310,23 +310,23 @@ int main(int argc, char *argv[]) {
     Vec3 scaledV = scale(&v, halfFrustumHeight);
 
     // calculate corners of viewing window
-    ul = sub(&eye, &scaledU);
-    ul = add(&ul, &scaledV);
+    ul = pointSub(&eye, &scaledU);
+    ul = pointAdd(&ul, &scaledV);
 
-    ur = add(&eye, &scaledU);
-    ur = add(&ur, &scaledV);
+    ur = pointAdd(&eye, &scaledU);
+    ur = pointAdd(&ur, &scaledV);
 
-    ll = sub(&eye, &scaledU);
-    ll = sub(&ll, &scaledV);
+    ll = pointSub(&eye, &scaledU);
+    ll = pointSub(&ll, &scaledV);
 
-    lr = add(&eye, &scaledU);
-    lr = sub(&lr, &scaledV);
+    lr = pointAdd(&eye, &scaledU);
+    lr = pointSub(&lr, &scaledV);
 
     // calculate the horizontal and vertical offset per pixel
-    hChange = sub(&ur, &ul);
+    hChange = pointSub(&ur, &ul);
     hChange = scale(&hChange, 1.0 / (imgWidth - 1));
 
-    vChange = sub(&ll, &ul);
+    vChange = pointSub(&ll, &ul);
     vChange = scale(&vChange, 1.0 / (imgHeight - 1));
   }
 
@@ -339,37 +339,30 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < imgHeight; i++) {
     for (int j = 0; j < imgWidth; j++) {
       // calculate the point on the viewing window the ray will shoot
-      Vec3 pointThrough = {ul.x + (i * vChange.x) + (j * hChange.x),
-                           ul.y + (i * vChange.y) + (j * hChange.y),
-                           ul.z + (i * vChange.z) + (j * hChange.z)};
+      Vec3 scaledvChange = scale(&vChange, i);
+      Vec3 scaledhChange = scale(&hChange, j);
+
+      Vec3 pointThrough = pointAdd(&ul, &scaledvChange);
+      pointThrough = pointAdd(&pointThrough, &scaledhChange);
 
       RayType curRay;
 
       if (parallelViewEnabled == 1) {
         // calculate the parallel view
         curRay.pos = pointThrough;
+        curRay.dir = w;
 
-        Vec3 parallelView = {w.x, w.y, w.z};
-
-        curRay.dir = parallelView;
       } else {
         // calculate the perspective view
         curRay.pos = eye;
 
-        float rayLength = sqrtf(pow(pointThrough.x - eye.x, 2.0) +
-                                pow(pointThrough.y - eye.y, 2.0) +
-                                pow(pointThrough.z - eye.z, 2.0));
-
-        Vec3 perspectiveView = {
-            (pointThrough.x - eye.x) / rayLength,
-            (pointThrough.y - eye.y) / rayLength,
-            (pointThrough.z - eye.z) / rayLength,
-        };
+        Vec3 perspectiveView = pointSub(&pointThrough, &eye);
+        normalize(&perspectiveView);
 
         curRay.dir = perspectiveView;
       }
 
-      image[i][j] = *traceRay(&curRay);
+      image[i][j] = traceRay(curRay);
     }
   }
 
@@ -411,29 +404,29 @@ int main(int argc, char *argv[]) {
   return cleanExit(0);
 }
 
-Vec3 *traceRay(RayType *ray) {
+Vec3 traceRay(RayType ray) {
   float minimumDistance = MAXFLOAT;
   EllipsoidType currentEllipsoid;
 
   for (int i = 0; i <= ellipsoidIndex; i++) {
     // calculate components of distance solution
-    float A = (powf(ray->dir.x / ellipsoids[i].radius.x, 2.0) +
-               powf(ray->dir.y / ellipsoids[i].radius.y, 2.0) +
-               powf(ray->dir.z / ellipsoids[i].radius.z, 2.0));
+    float A = (powf(ray.dir.x / ellipsoids[i].radius.x, 2.0) +
+               powf(ray.dir.y / ellipsoids[i].radius.y, 2.0) +
+               powf(ray.dir.z / ellipsoids[i].radius.z, 2.0));
 
-    float B = 2.0 * ((((ray->pos.x - ellipsoids[i].center.x) * ray->dir.x) /
+    float B = 2.0 * ((((ray.pos.x - ellipsoids[i].center.x) * ray.dir.x) /
                       powf(ellipsoids[i].radius.x, 2.0)) +
-                     (((ray->pos.y - ellipsoids[i].center.y) * ray->dir.y) /
+                     (((ray.pos.y - ellipsoids[i].center.y) * ray.dir.y) /
                       powf(ellipsoids[i].radius.y, 2.0)) +
-                     (((ray->pos.z - ellipsoids[i].center.z) * ray->dir.z) /
+                     (((ray.pos.z - ellipsoids[i].center.z) * ray.dir.z) /
                       powf(ellipsoids[i].radius.z, 2.0)));
 
     float C =
-        (powf((ray->pos.x - ellipsoids[i].center.x) / ellipsoids[i].radius.x,
+        (powf((ray.pos.x - ellipsoids[i].center.x) / ellipsoids[i].radius.x,
               2.0) +
-         powf((ray->pos.y - ellipsoids[i].center.y) / ellipsoids[i].radius.y,
+         powf((ray.pos.y - ellipsoids[i].center.y) / ellipsoids[i].radius.y,
               2.0) +
-         powf((ray->pos.z - ellipsoids[i].center.z) / ellipsoids[i].radius.z,
+         powf((ray.pos.z - ellipsoids[i].center.z) / ellipsoids[i].radius.z,
               2.0) -
          1);
 
@@ -459,13 +452,13 @@ Vec3 *traceRay(RayType *ray) {
 
   // check for unchanged value
   if (minimumDistance == MAXFLOAT) {
-    return &materials[0];
+    return materials[0];
   }
-  return shadeRay(&currentEllipsoid);
+  return shadeRay(currentEllipsoid);
 }
 
-Vec3 *shadeRay(EllipsoidType *closestEllipsoid) {
-  return &materials[closestEllipsoid->m];
+Vec3 shadeRay(EllipsoidType closestEllipsoid) {
+  return materials[closestEllipsoid.m];
 }
 
 int cleanExit(int value) {

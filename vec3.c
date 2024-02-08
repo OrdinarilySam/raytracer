@@ -1,6 +1,6 @@
 #include "vec3.h"
 
-Vec3 add(Vec3 *a, Vec3 *b) {
+Vec3 pointAdd(Vec3 *a, Vec3 *b) {
   Vec3 temp = *a;
   temp.x += b->x;
   temp.y += b->y;
@@ -8,7 +8,7 @@ Vec3 add(Vec3 *a, Vec3 *b) {
   return temp;
 }
 
-Vec3 sub(Vec3 *a, Vec3 *b) {
+Vec3 pointSub(Vec3 *a, Vec3 *b) {
   Vec3 temp = *a;
   temp.x -= b->x;
   temp.y -= b->y;
@@ -16,7 +16,7 @@ Vec3 sub(Vec3 *a, Vec3 *b) {
   return temp;
 }
 
-Vec3 mul(Vec3 *a, Vec3 *b) {
+Vec3 pointMult(Vec3 *a, Vec3 *b) {
   Vec3 temp = *a;
   temp.x *= b->x;
   temp.y *= b->y;
@@ -24,7 +24,7 @@ Vec3 mul(Vec3 *a, Vec3 *b) {
   return temp;
 }
 
-Vec3 div(Vec3 *a, Vec3 *b) {
+Vec3 pointDiv(Vec3 *a, Vec3 *b) {
   Vec3 temp = *a;
   temp.x /= b->x;
   temp.y /= b->y;

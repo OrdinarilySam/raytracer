@@ -4,3 +4,4 @@ raytracer
 raytracer1*
 .DS_Store
 config.local.mk
+*.o
