@@ -1,69 +1,60 @@
 #include "vec3.h"
 
-Vec3 *add(Vec3 *a, Vec3 *b)
-{
-    a->x += b->x;
-    a->y += b->y;
-    a->z += b->z;
-    return a;
+Vec3 add(Vec3 *a, Vec3 *b) {
+  Vec3 temp = *a;
+  temp.x += b->x;
+  temp.y += b->y;
+  temp.z += b->z;
+  return temp;
 }
 
-Vec3 *sub(Vec3 *a, Vec3 *b)
-{
-    a->x -= b->x;
-    a->y -= b->y;
-    a->z -= b->z;
-    return a;
+Vec3 sub(Vec3 *a, Vec3 *b) {
+  Vec3 temp = *a;
+  temp.x -= b->x;
+  temp.y -= b->y;
+  temp.z -= b->z;
+  return temp;
 }
 
-Vec3 *mul(Vec3 *a, Vec3 *b)
-{
-    a->x *= b->x;
-    a->y *= b->y;
-    a->z *= b->z;
-    return a;
+Vec3 mul(Vec3 *a, Vec3 *b) {
+  Vec3 temp = *a;
+  temp.x *= b->x;
+  temp.y *= b->y;
+  temp.z *= b->z;
+  return temp;
 }
 
-Vec3 *div(Vec3 *a, Vec3 *b)
-{
-    a->x /= b->x;
-    a->y /= b->y;
-    a->z /= b->z;
-    return a;
+Vec3 div(Vec3 *a, Vec3 *b) {
+  Vec3 temp = *a;
+  temp.x /= b->x;
+  temp.y /= b->y;
+  temp.z /= b->z;
+  return temp;
 }
 
-Vec3 *scale(Vec3 *a, float s)
-{
-    a->x *= s;
-    a->y *= s;
-    a->z *= s;
-    return a;
+Vec3 scale(Vec3 *a, float s) {
+  Vec3 temp = *a;
+  temp.x *= s;
+  temp.y *= s;
+  temp.z *= s;
+  return temp;
 }
 
-float length(Vec3 *a)
-{
-    return sqrt(a->x * a->x + a->y * a->y + a->z * a->z);
+float length(Vec3 *a) { return sqrt(a->x * a->x + a->y * a->y + a->z * a->z); }
+
+void normalize(Vec3 *a) {
+  float l = length(a);
+  a->x /= l;
+  a->y /= l;
+  a->z /= l;
 }
 
-Vec3 *normalize(Vec3 *a)
-{
-    float l = length(a);
-    a->x /= l;
-    a->y /= l;
-    a->z /= l;
-    return a;
-}
+float dot(Vec3 *a, Vec3 *b) { return a->x * b->x + a->y * b->y + a->z * b->z; }
 
-float dot(Vec3 *a, Vec3 *b)
-{
-    return a->x * b->x + a->y * b->y + a->z * b->z;
-}
-
-Vec3 *cross(Vec3 *a, Vec3 *b)
-{
-    Vec3 temp = *a;
-    a->x = temp.y * b->z - temp.z * b->y;
-    a->y = temp.z * b->x - temp.x * b->z;
-    a->z = temp.x * b->y - temp.y * b->x;
-    return a;
+Vec3 cross(Vec3 *a, Vec3 *b) {
+  Vec3 temp = *a;
+  temp.x = a->y * b->z - a->z * b->y;
+  temp.y = a->z * b->x - a->x * b->z;
+  temp.z = a->x * b->y - a->y * b->x;
+  return temp;
 }
