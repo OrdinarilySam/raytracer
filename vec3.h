@@ -1,3 +1,6 @@
+#ifndef VEC3_H
+#define VEC3_H
+
 #include <math.h>
 #include <stdlib.h>
 
@@ -18,12 +21,16 @@ typedef struct {
 float dot(Vec3 *a, Vec3 *b);
 float length(Vec3 *a);
 
-Vec3 pointAdd(Vec3 *a, Vec3 *b);
-Vec3 pointSub(Vec3 *a, Vec3 *b);
-Vec3 pointMult(Vec3 *a, Vec3 *b);
-Vec3 pointDiv(Vec3 *a, Vec3 *b);
+Vec3 pointAdd(Vec3 a, Vec3 b);
+Vec3 pointSub(Vec3 a, Vec3 b);
+Vec3 pointMult(Vec3, Vec3 b);
+Vec3 pointDiv(Vec3 a, Vec3 b);
 
-Vec3 scale(Vec3 *a, float b);
+Vec3 scale(Vec3 a, float b);
 
 void normalize(Vec3 *a);
-Vec3 cross(Vec3 *a, Vec3 *b);
+Vec3 cross(Vec3 a, Vec3 b);
+
+Vec3 newVec3(float a, float b, float c);
+
+#endif  // VEC3_H

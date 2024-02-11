@@ -4,10 +4,13 @@
 
 #include "raytracer.h"
 
-int materialIndex = 0;
+int materialIndex = -1;
 int ellipsoidIndex = -1;
-Vec3 *materials;
+int lightIndex = -1;
+MaterialType *materials;
 EllipsoidType *ellipsoids;
+LightType *lights;
+Vec3 bkgcolor = {-1, -1, -1};
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
@@ -17,7 +20,8 @@ int main(int argc, char *argv[]) {
 
   // count number of ellipsoids and materials
   int ellipsoidCount = 0;
-  int materialCount = 1;
+  int materialCount = 0;
+  int lightCount = 0;
 
   char buffer[100];
   FILE *fscan = fopen(argv[1], "r");
@@ -35,7 +39,7 @@ int main(int argc, char *argv[]) {
   fclose(fscan);
 
   // allocate material array
-  materials = malloc(materialCount * sizeof(Vec3));
+  materials = malloc(1 + materialCount * sizeof(MaterialType));
   if (materials == NULL) {
     printf("Failed to initialize a material array. Exiting...\n");
     return 1;
@@ -49,13 +53,20 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  lights = malloc(lightCount * sizeof(LightType));
+  if (lights == NULL) {
+    printf("Failed to initialize a light array. Exiting...\n");
+    free(materials);
+    free(ellipsoids);
+    return 1;
+  }
+
   // variable declaration
   Vec3 eye;
   Vec3 viewdir = {0, 0, 0};
   Vec3 updir = {0, 0, 0};
   float hfov = -1;
   int imgWidth, imgHeight = -1;
-  Vec3 bkgcolor = {-1, -1, -1};
 
   short parallelViewEnabled, foundEye = 0;
   float frustumWidth, frustumHeight;
@@ -99,21 +110,59 @@ int main(int argc, char *argv[]) {
       fscanf(fptr, "%f", &bkgcolor.r);
       fscanf(fptr, "%f", &bkgcolor.g);
       fscanf(fptr, "%f", &bkgcolor.b);
-      materials[0] = bkgcolor;
+      // add the background color as a global variable
     } else if (strcmp(buffer, "mtlcolor") == 0) {
-      // create the new material
-      Vec3 newMaterial;
-      fscanf(fptr, "%f", &newMaterial.r);
-      fscanf(fptr, "%f", &newMaterial.g);
-      fscanf(fptr, "%f", &newMaterial.b);
+      MaterialType newMaterial;
 
-      // ensure the colors are valid
-      if (((newMaterial.r < 0) || (newMaterial.r > 1)) ||
-          ((newMaterial.g < 0) || (newMaterial.g > 1)) ||
-          ((newMaterial.b < 0) || (newMaterial.b > 1))) {
+      Vec3 tempColor;
+
+      fscanf(fptr, "%f", &tempColor.r);
+      fscanf(fptr, "%f", &tempColor.g);
+      fscanf(fptr, "%f", &tempColor.b);
+      if (((tempColor.r < 0) || (tempColor.r > 1)) ||
+          ((tempColor.g < 0) || (tempColor.g > 1)) ||
+          ((tempColor.b < 0) || (tempColor.b > 1))) {
         printf("Material color must be between 0 and 1\n");
         return cleanExit(1);
       }
+
+      newMaterial.diffuseColor = tempColor;
+
+      fscanf(fptr, "%f", &tempColor.r);
+      fscanf(fptr, "%f", &tempColor.g);
+      fscanf(fptr, "%f", &tempColor.b);
+      if (((tempColor.r < 0) || (tempColor.r > 1)) ||
+          ((tempColor.g < 0) || (tempColor.g > 1)) ||
+          ((tempColor.b < 0) || (tempColor.b > 1))) {
+        printf("Material color must be between 0 and 1\n");
+        return cleanExit(1);
+      }
+
+      newMaterial.spectralColor = tempColor;
+
+      fscanf(fptr, "%f", &newMaterial.ka);
+      fscanf(fptr, "%f", &newMaterial.kd);
+      fscanf(fptr, "%f", &newMaterial.ks);
+
+      if (((newMaterial.ka < 0) || (newMaterial.ka > 1)) ||
+          ((newMaterial.kd < 0) || (newMaterial.kd > 1)) ||
+          ((newMaterial.ks < 0) || (newMaterial.ks > 1))) {
+        printf("Color term weights must be between 0 and 1\n");
+        return cleanExit(1);
+      }
+
+      fscanf(fptr, "%f", &newMaterial.n);
+
+      if (newMaterial.n < 0) {
+        printf("n must be positive\n");
+        return cleanExit(1);
+      }
+
+      printf("Material %d: %f %f %f %f %f %f %f %f %f %f\n", materialIndex,
+             newMaterial.diffuseColor.r, newMaterial.diffuseColor.g,
+             newMaterial.diffuseColor.b, newMaterial.spectralColor.r,
+             newMaterial.spectralColor.g, newMaterial.spectralColor.b,
+             newMaterial.ka, newMaterial.kd, newMaterial.ks, newMaterial.n);
 
       // add the material to the array
       materialIndex++;
@@ -138,7 +187,7 @@ int main(int argc, char *argv[]) {
       }
 
       // make sure a material was assigned
-      if (materialIndex == 0) {
+      if (materialIndex < 0) {
         printf("Must have at least one mtlcolor before a sphere.\n");
         return cleanExit(1);
       }
@@ -182,6 +231,36 @@ int main(int argc, char *argv[]) {
       // add the sphere to the array
       ellipsoidIndex++;
       ellipsoids[ellipsoidIndex] = newEllipsoid;
+    } else if (strcmp(buffer, "light") == 0) {
+      // create the new light
+      Vec3 lightPos;
+      fscanf(fptr, "%f", &lightPos.x);
+      fscanf(fptr, "%f", &lightPos.y);
+      fscanf(fptr, "%f", &lightPos.z);
+
+      short lightType;
+      fscanf(fptr, "%hd", &lightType);
+
+      float lightIntensity;
+      fscanf(fptr, "%f", &lightIntensity);
+
+      LightType newLight;
+      newLight.pos = lightPos;
+      newLight.intensity = lightIntensity;
+      newLight.type = lightType;
+
+      if (lightType < 0 || lightType > 1) {
+        printf("Light type must be 0 or 1\n");
+        return cleanExit(1);
+      }
+
+      if (lightIntensity < 0 || lightIntensity > 1) {
+        printf("Light intensity must be between 0 and 1\n");
+        return cleanExit(1);
+      }
+
+      lightIndex++;
+      lights[lightIndex] = newLight;
     }
   }
 
@@ -242,7 +321,7 @@ int main(int argc, char *argv[]) {
   normalize(&w);
 
   // u is the cross product of viewdir and updir
-  Vec3 u = cross(&w, &updir);
+  Vec3 u = cross(w, updir);
 
   // normalize u
   if (length(&u) <= 0.001) {
@@ -252,8 +331,7 @@ int main(int argc, char *argv[]) {
   normalize(&u);
 
   // v is the cross product of u and viewdir
-  Vec3 v = cross(&u, &w);
-  normalize(&v);
+  Vec3 v = cross(u, w);
 
   float viewWidth, viewHeight;
 
@@ -271,33 +349,21 @@ int main(int argc, char *argv[]) {
     float halfViewWidth = viewWidth / 2;
     float halfViewHeight = viewHeight / 2;
 
+    Vec3 scaledU = scale(u, halfViewWidth);
+    Vec3 scaledV = scale(v, halfViewHeight);
+
+    Vec3 addEye = pointAdd(eye, w);
+
     // calculate corners of viewing window
-
-    Vec3 scaledU = scale(&u, halfViewWidth);
-    Vec3 scaledV = scale(&v, halfViewHeight);
-
-    ul = pointAdd(&eye, &w);
-    ul = pointSub(&ul, &scaledU);
-    ul = pointAdd(&ul, &scaledV);
-
-    ur = pointAdd(&eye, &w);
-    ur = pointAdd(&ur, &scaledU);
-    ur = pointAdd(&ur, &scaledV);
-
-    ll = pointAdd(&eye, &w);
-    ll = pointSub(&ll, &scaledU);
-    ll = pointSub(&ll, &scaledV);
-
-    lr = pointAdd(&eye, &w);
-    lr = pointAdd(&lr, &scaledU);
-    lr = pointSub(&lr, &scaledV);
+    ul = pointAdd(pointSub(addEye, scaledU), scaledV);
+    ur = pointAdd(pointAdd(addEye, scaledU), scaledV);
+    ll = pointSub(pointSub(addEye, scaledU), scaledV);
+    lr = pointSub(pointAdd(addEye, scaledU), scaledV);
 
     // calculate the horizontal and vertical offset per pixel
-    hChange = pointSub(&ur, &ul);
-    hChange = scale(&hChange, 1.0 / (imgWidth - 1));
+    hChange = scale(pointSub(ur, ul), 1.0 / (imgWidth - 1));
+    vChange = scale(pointSub(ll, ul), 1.0 / (imgHeight - 1));
 
-    vChange = pointSub(&ll, &ul);
-    vChange = scale(&vChange, 1.0 / (imgHeight - 1));
   } else {
     /* ========================= PARALLEL PROJECTION =========================
      */
@@ -306,67 +372,22 @@ int main(int argc, char *argv[]) {
     float halfFrustumWidth = frustumWidth / 2;
     float halfFrustumHeight = frustumHeight / 2;
 
-    Vec3 scaledU = scale(&u, halfFrustumWidth);
-    Vec3 scaledV = scale(&v, halfFrustumHeight);
+    Vec3 scaledU = scale(u, halfFrustumWidth);
+    Vec3 scaledV = scale(v, halfFrustumHeight);
 
     // calculate corners of viewing window
-    ul = pointSub(&eye, &scaledU);
-    ul = pointAdd(&ul, &scaledV);
-
-    ur = pointAdd(&eye, &scaledU);
-    ur = pointAdd(&ur, &scaledV);
-
-    ll = pointSub(&eye, &scaledU);
-    ll = pointSub(&ll, &scaledV);
-
-    lr = pointAdd(&eye, &scaledU);
-    lr = pointSub(&lr, &scaledV);
+    ul = pointAdd(pointSub(eye, scaledU), scaledV);
+    ur = pointAdd(pointAdd(eye, scaledU), scaledV);
+    ll = pointSub(pointSub(eye, scaledU), scaledV);
+    lr = pointSub(pointAdd(eye, scaledU), scaledV);
 
     // calculate the horizontal and vertical offset per pixel
-    hChange = pointSub(&ur, &ul);
-    hChange = scale(&hChange, 1.0 / (imgWidth - 1));
-
-    vChange = pointSub(&ll, &ul);
-    vChange = scale(&vChange, 1.0 / (imgHeight - 1));
+    hChange = scale(pointSub(ur, ul), 1.0 / (imgWidth - 1));
+    vChange = scale(pointSub(ll, ul), 1.0 / (imgHeight - 1));
   }
-
-  // create image matrix
-  Vec3 image[imgHeight][imgWidth];
 
   /* ========================= DEFINING PIXEL COLORS =========================
    */
-
-  for (int i = 0; i < imgHeight; i++) {
-    for (int j = 0; j < imgWidth; j++) {
-      // calculate the point on the viewing window the ray will shoot
-      Vec3 scaledvChange = scale(&vChange, i);
-      Vec3 scaledhChange = scale(&hChange, j);
-
-      Vec3 pointThrough = pointAdd(&ul, &scaledvChange);
-      pointThrough = pointAdd(&pointThrough, &scaledhChange);
-
-      RayType curRay;
-
-      if (parallelViewEnabled == 1) {
-        // calculate the parallel view
-        curRay.pos = pointThrough;
-        curRay.dir = w;
-
-      } else {
-        // calculate the perspective view
-        curRay.pos = eye;
-
-        Vec3 perspectiveView = pointSub(&pointThrough, &eye);
-        normalize(&perspectiveView);
-
-        curRay.dir = perspectiveView;
-      }
-
-      image[i][j] = traceRay(curRay);
-    }
-  }
-
-  /* ========================= OUTPUT TO FILE ========================= */
 
   // find where the dot is
   char *dotPosition = strrchr(argv[1], '.');
@@ -388,15 +409,35 @@ int main(int argc, char *argv[]) {
     printf("Couldn't create file %s\n", argv[1]);
     return cleanExit(1);
   }
-
   // create the header for the ppm
   fprintf(outputFile, "P3 %d %d %d\n", imgWidth, imgHeight, 255);
 
-  // write the pixel contents to the file
   for (int i = 0; i < imgHeight; i++) {
     for (int j = 0; j < imgWidth; j++) {
-      fprintf(outputFile, "%d %d %d\n", (int)(image[i][j].r * 255),
-              (int)(image[i][j].g * 255), (int)(image[i][j].b * 255));
+      // calculate the point on the viewing window the ray will shoot
+      Vec3 pointThrough =
+          pointAdd(pointAdd(ul, scale(vChange, i)), scale(hChange, j));
+
+      RayType curRay;
+
+      if (parallelViewEnabled == 1) {
+        // calculate the parallel view
+        curRay.pos = pointThrough;
+        curRay.dir = w;
+
+      } else {
+        // calculate the perspective view
+        curRay.pos = eye;
+
+        Vec3 perspectiveView = pointSub(pointThrough, eye);
+        normalize(&perspectiveView);
+
+        curRay.dir = perspectiveView;
+      }
+
+      Vec3 fColor = traceRay(curRay);
+      fprintf(outputFile, "%d %d %d\n", (int)(fColor.r * 255),
+              (int)(fColor.g * 255), (int)(fColor.b * 255));
     }
   }
 
@@ -407,6 +448,8 @@ int main(int argc, char *argv[]) {
 Vec3 traceRay(RayType ray) {
   float minimumDistance = MAXFLOAT;
   EllipsoidType currentEllipsoid;
+
+  Vec3 pointHit;
 
   for (int i = 0; i <= ellipsoidIndex; i++) {
     // calculate components of distance solution
@@ -442,27 +485,79 @@ Vec3 traceRay(RayType ray) {
     if ((plusT > 0) && (plusT < minimumDistance)) {
       minimumDistance = plusT;
       currentEllipsoid = ellipsoids[i];
+      pointHit = pointAdd(ray.pos, scale(ray.dir, plusT));
     }
 
     if ((minusT > 0) && (minusT < minimumDistance)) {
       minimumDistance = minusT;
       currentEllipsoid = ellipsoids[i];
+      pointHit = pointAdd(ray.pos, scale(ray.dir, minusT));
     }
   }
 
   // check for unchanged value
   if (minimumDistance == MAXFLOAT) {
-    return materials[0];
+    return bkgcolor;
   }
-  return shadeRay(currentEllipsoid);
+  return shadeRay(currentEllipsoid, pointHit, ray);
 }
 
-Vec3 shadeRay(EllipsoidType closestEllipsoid) {
-  return materials[closestEllipsoid.m];
+Vec3 shadeRay(EllipsoidType closestEllipsoid, Vec3 pointHit, RayType ray) {
+  MaterialType surfaceMaterial = materials[closestEllipsoid.m];
+  Vec3 color = scale(surfaceMaterial.diffuseColor, surfaceMaterial.ka);
+
+  for (int i = 0; i <= lightIndex; i++) {
+    Vec3 lightDir;
+    if (lights[i].type == 1) {
+      lightDir = pointSub(lights[i].pos, pointHit);
+    } else {
+      lightDir = scale(lights[i].dir, -1);
+    }
+
+    normalize(&lightDir);
+
+    Vec3 N = pointDiv(pointSub(pointHit, closestEllipsoid.center),
+                      closestEllipsoid.radius);
+
+    float NdotL = dot(&N, &lightDir);
+    if (NdotL <= 0) {
+      continue;
+    }
+
+    Vec3 V = scale(ray.dir, -1);
+
+    Vec3 H = scale(pointAdd(lightDir, V), 0.5);
+    normalize(&H);
+
+    float NdotH = dot(&N, &H);
+    if (NdotH < 0) {
+      NdotH = 0;
+    }
+
+    Vec3 diffuse =
+        scale(surfaceMaterial.diffuseColor, NdotL * surfaceMaterial.kd);
+    Vec3 specular = scale(surfaceMaterial.spectralColor,
+                          powf(NdotH, surfaceMaterial.n) * surfaceMaterial.ks);
+
+    color = pointAdd(color,
+                     scale(pointAdd(diffuse, specular), lights[i].intensity));
+  }
+
+  if (color.r > 1) {
+    color.r = 1;
+  }
+  if (color.g > 1) {
+    color.g = 1;
+  }
+  if (color.b > 1) {
+    color.b = 1;
+  }
+  return color;
 }
 
 int cleanExit(int value) {
   free(ellipsoids);
   free(materials);
+  free(lights);
   return value;
 }

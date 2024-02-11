@@ -24,4 +24,4 @@ test: raytracer1a
 	done
 
 clean:
-	rm -f raytracer1a *.ppm
+	rm -f raytracer1* *.ppm *.o

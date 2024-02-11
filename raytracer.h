@@ -16,6 +16,23 @@ typedef struct {
   Vec3 dir;
 } RayType;
 
+typedef struct {
+  Vec3 diffuseColor;
+  Vec3 spectralColor;
+  float ka, kd, ks;
+  float n;
+} MaterialType;
+
+typedef struct {
+  union {
+    Vec3 pos;
+    Vec3 dir;
+  };
+  short type;
+  float intensity;
+
+} LightType;
+
 Vec3 traceRay(RayType ray);
-Vec3 shadeRay(EllipsoidType closestEllipsoid);
+Vec3 shadeRay(EllipsoidType closestEllipsoid, Vec3 pointHit, RayType ray);
 int cleanExit(int value);
