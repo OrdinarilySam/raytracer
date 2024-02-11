@@ -2,6 +2,7 @@
 #define TYPEDEFS_H
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "vec3.h"
 

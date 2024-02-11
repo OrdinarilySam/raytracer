@@ -202,6 +202,36 @@ void readScene(Scene* scene, char* filename) {
     exit(1);
   }
   validateScene(scene);
+  FILE* fp =
+      createOutputFile(filename, scene->imgsize.width, scene->imgsize.height);
+  if (fp == NULL) {
+    freeAll(scene);
+    exit(1);
+  }
+  scene->output = fp;
+}
+
+FILE* createOutputFile(char* filename, int imgWidth, int imgHeight) {
+  char* dotPosition = strrchr(filename, '.');
+  char newFileName[strlen(filename) + strlen(".ppm") + 1];
+
+  if (dotPosition != NULL) {
+    strncpy(newFileName, filename, dotPosition - filename);
+    strcpy(newFileName + (dotPosition - filename), ".ppm\0");
+  } else {
+    strcpy(newFileName, filename);
+    strcat(newFileName, ".ppm\0");
+  }
+
+  FILE* outputFile = fopen(newFileName, "w");
+  if (outputFile == NULL) {
+    printf("Couldn't create file %s\n", newFileName);
+    return NULL;
+  }
+
+  fprintf(outputFile, "P3 %d %d %d\n", imgWidth, imgHeight, 255);
+
+  return outputFile;
 }
 
 void validateScene(Scene* scene) {
