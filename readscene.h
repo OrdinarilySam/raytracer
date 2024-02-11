@@ -19,9 +19,14 @@ typedef enum {
   MTL_COLOR,
   LIGHT,
   PARALLEL,
-  SPHERE
+  SPHERE,
+  UNKNOWN
 } Keyword;
 
-int readscene(Scene* scene, char* filename);
+Keyword getKeyword(char* keyword);
+void readScene(Scene* scene, char* filename);
+void initializeScene(Scene* scene);
+void validateScene(Scene* scene);
+void freeAll(Scene* scene);
 
 #endif  // READSCENE_H
