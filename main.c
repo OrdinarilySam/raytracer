@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  readscene(scene, argv[1]);
+  readScene(scene, argv[1]);
 
   for (int i = 0; i < scene->imgsize.height; i++) {
     for (int j = 0; j < scene->imgsize.width; j++) {

@@ -1,11 +1,14 @@
 #ifndef TYPEDEFS_H
 #define TYPEDEFS_H
 
+#include <stdbool.h>
+
 #include "vec3.h"
 
 typedef struct {
   Vec3 center;
   Vec3 radii;
+  int material;
 } Ellipsoid;
 
 typedef struct {
@@ -15,7 +18,10 @@ typedef struct {
 } Material;
 
 typedef struct {
-  Vec3 position;
+  union {
+    Vec3 position;
+    Vec3 direction;
+  };
   bool type;
   float intensity;
 } Light;
@@ -37,6 +43,7 @@ typedef struct {
   Vec3 updir;
   Vec3 bkgcolor;
   Image imgsize;
+  bool parallel;
   union {
     float hfov;
     float frustum;
