@@ -8,6 +8,8 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
   Vec3 viewDir = scale(ray->direction, -1);
   Vec3 pointHit = pointAdd(ray->origin, scale(ray->direction, t));
 
+  normalize(&viewDir);
+
   for (int i = 0; i < scene->numLights; i++) {
     Light light = scene->lights[i];
 
@@ -21,11 +23,17 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
 
     {
       Ray shadowRay = {pointHit, lightDir};
-      Vec3 toLight = pointSub(light.position, pointHit);
-      float distance = length(&toLight);
+      if (light.type) {
+        Vec3 toLight = pointSub(light.position, pointHit);
+        float distance = length(&toLight);
 
-      if (shadowCheck(scene, &shadowRay, ellipsoid) < distance) {
-        continue;
+        if (shadowCheck(scene, &shadowRay, ellipsoid) < distance) {
+          continue;
+        }
+      } else {
+        if (shadowCheck(scene, &shadowRay, ellipsoid) != INFINITY) {
+          continue;
+        }
       }
     }
 
@@ -46,7 +54,8 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
     Vec3 specular =
         scale(material.specularColor, material.ks * pow(NdotH, material.n));
 
-    color = pointAdd(color, pointAdd(diffuse, specular));
+    color =
+        pointAdd(color, scale(pointAdd(diffuse, specular), light.intensity));
   }
 
   if (color.r > 1) {

@@ -29,7 +29,7 @@ tracerays.o: tracerays.c tracerays.h typedefs.h vec3.o shaderay.o
 
 test: raytracer1b
 	@for number in $$(seq 1 $(NUM_INPUTS)); do \
-		./raytracer1a $(FILE_NAME)$$number.$(FILE_EXT); \
+		./raytracer1b $(FILE_NAME)$$number.$(FILE_EXT); \
 	done
 
 clean:
