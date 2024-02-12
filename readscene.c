@@ -90,7 +90,7 @@ void readScene(Scene* scene, char* filename) {
         }
 
         float r;
-        fscanf(file, "%f %f %f", &scene->ellipsoids[ellipsoidIndex].center.x,
+        fscanf(file, "%f %f %f %f", &scene->ellipsoids[ellipsoidIndex].center.x,
                &scene->ellipsoids[ellipsoidIndex].center.y,
                &scene->ellipsoids[ellipsoidIndex].center.z, &r);
 
@@ -114,7 +114,7 @@ void readScene(Scene* scene, char* filename) {
           exit(1);
         }
 
-        fscanf(file, "%f %f %f %f %f %f %f %f %f",
+        fscanf(file, "%f %f %f %f %f %f",
                &scene->ellipsoids[ellipsoidIndex].center.x,
                &scene->ellipsoids[ellipsoidIndex].center.y,
                &scene->ellipsoids[ellipsoidIndex].center.z,
@@ -170,7 +170,7 @@ void readScene(Scene* scene, char* filename) {
         materialIndex++;
         break;
 
-      case LIGHT:
+      case LIGHT: {
         int temp;
         fscanf(file, "%f %f %f", &scene->lights[lightIndex].position.x,
                &scene->lights[lightIndex].position.y,
@@ -188,6 +188,7 @@ void readScene(Scene* scene, char* filename) {
 
         lightIndex++;
         break;
+      }
 
       case UNKNOWN:
         break;
