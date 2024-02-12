@@ -38,10 +38,10 @@ void traceRays(Scene* scene) {
     scaledU = scale(u, halfWidth);
     scaledV = scale(v, halfHeight);
 
-    ul = pointSub(pointAdd(eye, scaledU), scaledV);
+    ul = pointAdd(pointSub(eye, scaledU), scaledV);
     ur = pointAdd(pointAdd(eye, scaledU), scaledV);
     ll = pointSub(pointSub(eye, scaledU), scaledV);
-    lr = pointAdd(pointSub(eye, scaledU), scaledV);
+    lr = pointSub(pointAdd(eye, scaledU), scaledV);
 
     hChange = scale(pointSub(ur, ul), 1.0 / (scene->imgsize.width - 1));
     vChange = scale(pointSub(ll, ul), 1.0 / (scene->imgsize.height - 1));
