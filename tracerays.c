@@ -69,12 +69,12 @@ void traceRays(Scene* scene) {
 
 void traceRay(Scene* scene, Ray* ray) {
   float minimumDistance = INFINITY;
-  Ellipsoid closestEllipsoid;
+  Ellipsoid* closestEllipsoid;
   bool hit = false;
 
   for (int i = 0; i < scene->numEllipsoids; i++) {
-    Ellipsoid ellipsoid = scene->ellipsoids[i];
-    float t = rayIntersection(ray, &ellipsoid);
+    Ellipsoid* ellipsoid = &scene->ellipsoids[i];
+    float t = rayIntersection(ray, ellipsoid);
 
     if (t > 0 && t < minimumDistance) {
       minimumDistance = t;
@@ -84,7 +84,7 @@ void traceRay(Scene* scene, Ray* ray) {
   }
 
   if (hit) {
-    shadeRay(scene, ray, &closestEllipsoid, minimumDistance);
+    shadeRay(scene, ray, closestEllipsoid, minimumDistance);
   } else {
     fprintf(scene->output, "%d %d %d\n", (int)(scene->bkgcolor.r * 255),
             (int)(scene->bkgcolor.g * 255), (int)(scene->bkgcolor.b * 255));
