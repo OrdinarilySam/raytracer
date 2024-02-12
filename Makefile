@@ -1,36 +1,55 @@
--include config.local.mk
+# Configuration
+-include config/config.local.mk
 ifndef CXX
     CXX=clang
 endif
 
+# Directories
+SRC_DIR = src
+INC_DIR = include
+OBJ_DIR = obj
+OUT_DIR = out
+DATA_DIR = data
+
+# Find all .c files in SRC_DIR to compile them into .o files in OBJ_DIR
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+# Default goal
 .DEFAULT_GOAL := all
 
-all: raytracer1b
+# Targets
+all: $(OUT_DIR)/raytracer1b
 
-.PHONY: all clean test
+.PHONY: all clean test run
 
-raytracer1b: main.o vec3.o readscene.o shaderay.o tracerays.o 
-	$(CXX) -o raytracer1b main.o vec3.o readscene.o shaderay.o tracerays.o 
+# Linking the executable
+$(OUT_DIR)/raytracer1b: $(OBJS)
+	$(CXX) -o $@ $^
 
-main.o: main.c main.h typedefs.h vec3.o
-	$(CXX) -c main.c
+# Compiling source files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	$(CXX) -I $(INC_DIR) -c $< -o $@
 
-vec3.o: vec3.c vec3.h
-	$(CXX) -c vec3.c
+# Create the object files directory
+$(OBJ_DIR):
+	mkdir -p $@
 
-readscene.o: readscene.c readscene.h typedefs.h vec3.o
-	$(CXX) -c readscene.c
+# Create the output directory
+$(OUT_DIR):
+	mkdir -p $@
 
-shaderay.o: shaderay.c shaderay.h typedefs.h vec3.o
-	$(CXX) -c shaderay.c
-
-tracerays.o: tracerays.c tracerays.h typedefs.h vec3.o shaderay.o
-	$(CXX) -c tracerays.c
-
-test: raytracer1b
+# Test target
+test: $(OUT_DIR)/raytracer1b
 	@for number in $$(seq 1 $(NUM_INPUTS)); do \
-		./raytracer1b $(FILE_NAME)$$number.$(FILE_EXT); \
+		./$(OUT_DIR)/raytracer1b $(DATA_DIR)/$(FILE_NAME)$$number.$(FILE_EXT); \
 	done
 
+# Clean target
 clean:
-	rm -f raytracer1* *.ppm *.o
+	rm -rf $(OBJ_DIR) $(OUT_DIR)/raytracer1* *.ppm
+
+# Run program with a user-specified input file
+# Usage: make run INPUT=filename.txt
+run: $(OUT_DIR)/raytracer1b
+	@./$(OUT_DIR)/raytracer1b $(DATA_DIR)/$(INPUT)
