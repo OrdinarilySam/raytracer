@@ -52,6 +52,16 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
     color = pointAdd(color, pointAdd(diffuse, specular));
   }
 
+  if (color.r > 1) {
+    color.r = 1;
+  }
+  if (color.g > 1) {
+    color.g = 1;
+  }
+  if (color.b > 1) {
+    color.b = 1;
+  }
+
   fprintf(scene->output, "%d %d %d\n", (int)(color.r * 255),
           (int)(color.g * 255), (int)(color.b * 255));
 }
