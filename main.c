@@ -15,11 +15,7 @@ int main(int argc, char* argv[]) {
 
   readScene(scene, argv[1]);
 
-  for (int i = 0; i < scene->imgsize.height; i++) {
-    for (int j = 0; j < scene->imgsize.width; j++) {
-      traceray(scene, i, j);
-    }
-  }
+  traceRays(scene);
 
   fclose(scene->output);
   free(scene);

@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "readscene.h"
+#include "tracerays.h"
 #include "typedefs.h"
 #include "vec3.h"
 

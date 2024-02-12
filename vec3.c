@@ -59,8 +59,10 @@ Vec3 cross(Vec3 a, Vec3 b) {
   return out;
 }
 
-Vec3 newVec3(float a, float b, float c) {
-  // Vec3 out = {a, b, c};
-  // return out;
-  return (Vec3){a, b, c};
+Vec3 pointPower(Vec3 a, float p) {
+  Vec3 out;
+  out.x = powf(a.x, p);
+  out.y = powf(a.y, p);
+  out.z = powf(a.z, p);
+  return out;
 }

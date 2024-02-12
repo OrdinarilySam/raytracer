@@ -31,6 +31,6 @@ Vec3 scale(Vec3 a, float b);
 void normalize(Vec3 *a);
 Vec3 cross(Vec3 a, Vec3 b);
 
-Vec3 newVec3(float a, float b, float c);
+Vec3 pointPower(Vec3 a, float b);
 
 #endif  // VEC3_H
