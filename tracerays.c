@@ -61,13 +61,13 @@ void traceRays(Scene* scene) {
         curRay.direction = w;
       }
 
-      traceRay(&curRay, scene);
+      traceRay(scene, &curRay);
     }
   }
 }
 
-void traceRay(Ray* ray, Scene* scene) {
-  float minimumDistance = MAXFLOAT;
+void traceRay(Scene* scene, Ray* ray) {
+  float minimumDistance = INFINITY;
   Ellipsoid closestEllipsoid;
   bool hit = false;
 

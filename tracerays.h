@@ -9,13 +9,7 @@
 #include "typedefs.h"
 #include "vec3.h"
 
-typedef struct {
-  Vec3 origin;
-  Vec3 direction;
-} Ray;
-
 void traceRays(Scene *scene);
-void traceRay(Ray *ray, Scene *scene);
-float rayIntersection(Ray *ray, Ellipsoid *ellipsoid);
+void traceRay(Scene *scene, Ray *ray);
 
 #endif  // TRACERAYS_H

@@ -33,9 +33,8 @@ typedef struct {
 } Image;
 
 typedef struct {
-  Vec3 position;
+  Vec3 origin;
   Vec3 direction;
-
 } Ray;
 
 typedef struct {
