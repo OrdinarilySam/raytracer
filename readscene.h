@@ -29,5 +29,6 @@ void initializeScene(Scene* scene);
 void validateScene(Scene* scene);
 void freeAll(Scene* scene);
 FILE* createOutputFile(char* filename, int imgWidth, int imgHeight);
+void printScene(Scene* scene);
 
 #endif  // READSCENE_H

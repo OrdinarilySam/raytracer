@@ -210,6 +210,8 @@ void readScene(Scene* scene, char* filename) {
     exit(1);
   }
   scene->output = fp;
+
+  // printScene(scene);
 }
 
 FILE* createOutputFile(char* filename, int imgWidth, int imgHeight) {
@@ -346,4 +348,56 @@ Keyword getKeyword(char* keyword) {
     return PARALLEL;
   }
   return UNKNOWN;
+}
+
+void printScene(Scene* scene) {
+  printf("------------------- Scene -------------------\n");
+  printf("Image size: %d %d\n", scene->imgsize.width, scene->imgsize.height);
+  printf("Eye: %f %f %f\n", scene->eye.x, scene->eye.y, scene->eye.z);
+  printf("Viewdir: %f %f %f\n", scene->viewdir.x, scene->viewdir.y,
+         scene->viewdir.z);
+  printf("Updir: %f %f %f\n", scene->updir.x, scene->updir.y, scene->updir.z);
+  if (scene->parallel) {
+    printf("Frustum: %f\n", scene->frustum);
+  } else {
+    printf("Hfov: %f\n", scene->hfov);
+  }
+  printf("Background color: %f %f %f\n", scene->bkgcolor.x, scene->bkgcolor.y,
+         scene->bkgcolor.z);
+  printf("-------------------- Ellipsoids -------------------\n");
+  printf("Number of ellipsoids: %d\n", scene->numEllipsoids);
+  for (int i = 0; i < scene->numEllipsoids; i++) {
+    printf("Ellipsoid %d\n", i);
+    printf("Center: %f %f %f\n", scene->ellipsoids[i].center.x,
+           scene->ellipsoids[i].center.y, scene->ellipsoids[i].center.z);
+    printf("Radii: %f %f %f\n", scene->ellipsoids[i].radii.x,
+           scene->ellipsoids[i].radii.y, scene->ellipsoids[i].radii.z);
+    printf("Material: %d\n", scene->ellipsoids[i].material);
+  }
+
+  printf("-------------------- Materials -------------------\n");
+  printf("Number of materials: %d\n", scene->numMaterials);
+  for (int i = 0; i < scene->numMaterials; i++) {
+    printf("Material %d\n", i);
+    printf("Diffuse color: %f %f %f\n", scene->materials[i].diffuseColor.x,
+           scene->materials[i].diffuseColor.y,
+           scene->materials[i].diffuseColor.z);
+    printf("Specular color: %f %f %f\n", scene->materials[i].specularColor.x,
+           scene->materials[i].specularColor.y,
+           scene->materials[i].specularColor.z);
+    printf("ka: %f\n", scene->materials[i].ka);
+    printf("kd: %f\n", scene->materials[i].kd);
+    printf("ks: %f\n", scene->materials[i].ks);
+    printf("n: %f\n", scene->materials[i].n);
+  }
+
+  printf("-------------------- Lights -------------------\n");
+  printf("Number of lights: %d\n", scene->numLights);
+  for (int i = 0; i < scene->numLights; i++) {
+    printf("Light %d\n", i);
+    printf("Position: %f %f %f\n", scene->lights[i].position.x,
+           scene->lights[i].position.y, scene->lights[i].position.z);
+    printf("Type: %d\n", scene->lights[i].type);
+    printf("Intensity: %f\n", scene->lights[i].intensity);
+  }
 }
