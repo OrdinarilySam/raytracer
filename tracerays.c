@@ -2,6 +2,7 @@
 
 void traceRays(Scene* scene) {
   Vec3 w = scene->viewdir;
+  normalize(&w);
   Vec3 u = cross(w, scene->updir);
   normalize(&u);
 
@@ -20,7 +21,7 @@ void traceRays(Scene* scene) {
     Vec3 eye;
 
     if (!scene->parallel) {
-      viewWidth = 2 * tanf(scene->hfov * (M_PI / 180.0) / 2);
+      viewWidth = 2 * tanf(scene->hfov * (M_PI / 180.0) / 2.0);
       eye = pointAdd(scene->eye, w);
 
     } else {
@@ -29,7 +30,7 @@ void traceRays(Scene* scene) {
     }
 
     viewHeight = viewWidth /
-                 ((float)scene->imgsize.width * (float)scene->imgsize.height);
+                 ((float)scene->imgsize.width / (float)scene->imgsize.height);
 
     halfWidth = viewWidth / 2;
     halfHeight = viewHeight / 2;

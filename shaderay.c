@@ -2,6 +2,10 @@
 
 void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
   Material material = scene->materials[ellipsoid->material];
+  // fprintf(scene->output, "%d %d %d\n", (int)(material.diffuseColor.r * 255),
+  //         (int)(material.diffuseColor.g * 255),
+  //         (int)(material.diffuseColor.b * 255));
+  // return;
   Vec3 color = scale(material.diffuseColor, material.ka);
 
   Vec3 normal = ellipsoidNormal(ellipsoid, ray->origin, t);
@@ -19,14 +23,14 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
     }
     normalize(&lightDir);
 
-    {
-      Ray shadowRay = {pointHit, lightDir};
-      Vec3 toLight = pointSub(light.position, pointHit);
-      float distance = length(&toLight);
-      if (shadowCheck(scene, &shadowRay, ellipsoid) < distance) {
-        continue;
-      }
-    }
+    // {
+    //   Ray shadowRay = {pointHit, lightDir};
+    //   Vec3 toLight = pointSub(light.position, pointHit);
+    //   float distance = length(&toLight);
+    //   if (shadowCheck(scene, &shadowRay, ellipsoid) < distance) {
+    //     continue;
+    //   }
+    // }
 
     float NdotL = dot(&normal, &lightDir);
     if (NdotL < 0) {
