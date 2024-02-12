@@ -4,9 +4,9 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
   Material material = scene->materials[ellipsoid->material];
   Vec3 color = scale(material.diffuseColor, material.ka);
 
-  Vec3 normal = ellipsoidNormal(ellipsoid, ray->origin, t);
   Vec3 viewDir = scale(ray->direction, -1);
   Vec3 pointHit = pointAdd(ray->origin, scale(ray->direction, t));
+  Vec3 normal = ellipsoidNormal(ellipsoid, pointHit);
 
   normalize(&viewDir);
 
@@ -72,7 +72,7 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
           (int)(color.g * 255), (int)(color.b * 255));
 }
 
-Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point, float t) {
+Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point) {
   Vec3 normal = scale(pointSub(point, ellipsoid->center), 2);
   normal = pointDiv(normal, pointPower(ellipsoid->radii, 2));
   normalize(&normal);

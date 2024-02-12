@@ -211,6 +211,7 @@ void readScene(Scene* scene, char* filename) {
   }
   scene->output = fp;
 
+  // ? Debugging
   // printScene(scene);
 }
 
@@ -398,6 +399,6 @@ void printScene(Scene* scene) {
     printf("Position: %f %f %f\n", scene->lights[i].position.x,
            scene->lights[i].position.y, scene->lights[i].position.z);
     printf("Type: %d\n", scene->lights[i].type);
-    printf("Intensity: %f\n", scene->lights[i].intensity);
+    printf("Intensity: %f\n\n", scene->lights[i].intensity);
   }
 }

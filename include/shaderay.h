@@ -11,7 +11,7 @@ float rayIntersection(Ray *ray, Ellipsoid *ellipsoid);
 
 void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t);
 
-Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point, float t);
+Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point);
 float shadowCheck(Scene *scene, Ray *ray, Ellipsoid *ellipsoid);
 
 #endif  // SHADERAY_H
