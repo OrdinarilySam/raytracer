@@ -14,14 +14,13 @@ void readScene(Scene* scene, char* filename) {
   while (fscanf(file, "%s", buffer) != EOF) {
     if (strcmp(buffer, "sphere") == 0) {
       scene->numEllipsoids++;
-    }
-    if (strcmp(buffer, "ellipse") == 0) {
+    } else if (strcmp(buffer, "ellipse") == 0) {
       scene->numEllipsoids++;
-    }
-    if (strcmp(buffer, "mtlcolor") == 0) {
+    } else if (strcmp(buffer, "mtlcolor") == 0) {
       scene->numMaterials++;
-    }
-    if (strcmp(buffer, "light") == 0) {
+    } else if (strcmp(buffer, "light") == 0) {
+      scene->numLights++;
+    } else if (strcmp(buffer, "attlight") == 0) {
       scene->numLights++;
     }
   }
@@ -186,9 +185,44 @@ void readScene(Scene* scene, char* filename) {
           exit(1);
         }
 
+        scene->lights[lightIndex].attenuation = (Vec3){0, 0, 0};
+
         lightIndex++;
         break;
       }
+
+      case ATT_LIGHT:
+        int temp;
+        fscanf(file, "%f %f %f", &scene->lights[lightIndex].position.x,
+               &scene->lights[lightIndex].position.y,
+               &scene->lights[lightIndex].position.z);
+        fscanf(file, "%d %f", &temp, &scene->lights[lightIndex].intensity);
+        scene->lights[lightIndex].type = (bool)temp;
+
+        if (scene->lights[lightIndex].intensity < 0 ||
+            scene->lights[lightIndex].intensity > 1) {
+          printf("Error: light intensity must be between 0 and 1\n");
+          freeAll(scene);
+          fclose(file);
+          exit(1);
+        }
+
+        fscanf(file, "%f %f %f", &scene->lights[lightIndex].attenuation.x,
+               &scene->lights[lightIndex].attenuation.y,
+               &scene->lights[lightIndex].attenuation.z);
+
+        if (scene->lights[lightIndex].attenuation.x < 0 ||
+            scene->lights[lightIndex].attenuation.y < 0 ||
+            scene->lights[lightIndex].attenuation.z < 0) {
+          printf("Error: attenuation components must be greater than 0\n");
+          freeAll(scene);
+          fclose(file);
+          exit(1);
+        }
+        break;
+
+      case DEPTH_CUEING:
+        break;
 
       case UNKNOWN:
         break;
@@ -347,6 +381,9 @@ Keyword getKeyword(char* keyword) {
   }
   if (strcmp(keyword, "parallel") == 0) {
     return PARALLEL;
+  }
+  if (strcmp(keyword, "attlight") == 0) {
+    return ATT_LIGHT;
   }
   return UNKNOWN;
 }

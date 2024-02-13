@@ -21,11 +21,15 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
     }
     normalize(&lightDir);
 
+    float attenuation = 1;
+
     {
       Ray shadowRay = {pointHit, lightDir};
       if (light.type) {
         Vec3 toLight = pointSub(light.position, pointHit);
         float distance = length(&toLight);
+
+        attenuation = getAttenuation(&light, distance);
 
         if (shadowCheck(scene, &shadowRay, ellipsoid) < distance) {
           continue;
@@ -95,4 +99,13 @@ float shadowCheck(Scene *scene, Ray *shadowRay, Ellipsoid *ellipsoid) {
   }
 
   return minimumDistance;
+}
+
+float getAttenuation(Light *light, float distance) {
+  if (light->attenuation.x + light->attenuation.y + light->attenuation.z > 0) {
+    return 1 / (light->attenuation.x + light->attenuation.y * distance +
+                light->attenuation.z * distance * distance);
+  } else {
+    return 1;
+  }
 }

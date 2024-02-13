@@ -20,6 +20,8 @@ typedef enum {
   LIGHT,
   PARALLEL,
   SPHERE,
+  ATT_LIGHT,
+  DEPTH_CUEING,
   UNKNOWN
 } Keyword;
 
