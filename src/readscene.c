@@ -191,7 +191,7 @@ void readScene(Scene* scene, char* filename) {
         break;
       }
 
-      case ATT_LIGHT:
+      case ATT_LIGHT: {
         int temp;
         fscanf(file, "%f %f %f", &scene->lights[lightIndex].position.x,
                &scene->lights[lightIndex].position.y,
@@ -220,6 +220,7 @@ void readScene(Scene* scene, char* filename) {
           exit(1);
         }
         break;
+      }
 
       case DEPTH_CUEING:
         break;
