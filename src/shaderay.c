@@ -72,6 +72,13 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
     color.b = 1;
   }
 
+  if (scene->depthcue.enabled) {
+    Vec3 eyeToHit = pointSub(scene->eye, pointHit);
+    float depthCueing = getDepthCueing(&scene->depthcue, length(&eyeToHit));
+    color = pointAdd(scale(color, depthCueing),
+                     scale(scene->depthcue.color, 1 - depthCueing));
+  }
+
   fprintf(scene->output, "%d %d %d\n", (int)(color.r * 255),
           (int)(color.g * 255), (int)(color.b * 255));
 }
@@ -108,4 +115,18 @@ float getAttenuation(Light *light, float distance) {
   } else {
     return 1;
   }
+}
+
+float getDepthCueing(DepthCue *depthcue, float t) {
+  if (t < depthcue->minDist) {
+    return depthcue->maxA;
+  }
+
+  if (t > depthcue->maxDist) {
+    return depthcue->minA;
+  }
+
+  return depthcue->minA + (depthcue->maxA - depthcue->minA) *
+                              (depthcue->maxDist - t) /
+                              (depthcue->maxDist - depthcue->minDist);
 }

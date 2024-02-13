@@ -15,5 +15,6 @@ Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point);
 float shadowCheck(Scene *scene, Ray *ray, Ellipsoid *ellipsoid);
 
 float getAttenuation(Light *light, float distance);
+float getDepthCueing(DepthCue *depthcue, float distance);
 
 #endif  // SHADERAY_H

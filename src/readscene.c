@@ -223,6 +223,11 @@ void readScene(Scene* scene, char* filename) {
       }
 
       case DEPTH_CUEING:
+        fscanf(file, "%f %f %f %f %f %f %f", &scene->depthcue.color.x,
+               &scene->depthcue.color.y, &scene->depthcue.color.z,
+               &scene->depthcue.minA, &scene->depthcue.maxA,
+               &scene->depthcue.minDist, &scene->depthcue.maxDist);
+        scene->depthcue.enabled = true;
         break;
 
       case UNKNOWN:
@@ -262,6 +267,7 @@ FILE* createOutputFile(char* filename, int imgWidth, int imgHeight) {
     strcat(newFileName, ".ppm\0");
   }
 
+  // printf("Creating file %s\n", newFileName);
   FILE* outputFile = fopen(newFileName, "w");
   if (outputFile == NULL) {
     printf("Couldn't create file %s\n", newFileName);
@@ -326,6 +332,31 @@ void validateScene(Scene* scene) {
     freeAll(scene);
     exit(1);
   }
+  if (scene->depthcue.enabled) {
+    if (scene->depthcue.minA < 0 || scene->depthcue.minA > 1 ||
+        scene->depthcue.maxA < 0 || scene->depthcue.maxA > 1) {
+      printf("Error: minA and maxA must be between 0 and 1\n");
+      freeAll(scene);
+      exit(1);
+    }
+    if (scene->depthcue.minDist < 0 || scene->depthcue.maxDist < 0) {
+      printf("Error: minDist and maxDist must be greater than 0\n");
+      freeAll(scene);
+      exit(1);
+    }
+    if (scene->depthcue.minDist >= scene->depthcue.maxDist) {
+      printf("Error: minDist must be less than maxDist\n");
+      freeAll(scene);
+      exit(1);
+    }
+    if (scene->depthcue.color.x < 0 || scene->depthcue.color.x > 1 ||
+        scene->depthcue.color.y < 0 || scene->depthcue.color.y > 1 ||
+        scene->depthcue.color.z < 0 || scene->depthcue.color.z > 1) {
+      printf("Error: depthcue color components must be between 0 and 1\n");
+      freeAll(scene);
+      exit(1);
+    }
+  }
 
   normalize(&scene->updir);
   normalize(&scene->viewdir);
@@ -347,6 +378,7 @@ void initializeScene(Scene* scene) {
   scene->eye = (Vec3){0, 0, 0};
   scene->bkgcolor = (Vec3){-1, -1, -1};
   scene->parallel = false;
+  scene->depthcue.enabled = false;
 }
 
 Keyword getKeyword(char* keyword) {
@@ -385,6 +417,9 @@ Keyword getKeyword(char* keyword) {
   }
   if (strcmp(keyword, "attlight") == 0) {
     return ATT_LIGHT;
+  }
+  if (strcmp(keyword, "depthcueing") == 0) {
+    return DEPTH_CUEING;
   }
   return UNKNOWN;
 }

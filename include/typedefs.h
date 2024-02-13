@@ -40,8 +40,8 @@ typedef struct {
 
 typedef struct {
   Vec3 color;
-  float maxA, minA;
-  float maxDist, minDist;
+  float minA, maxA;
+  float minDist, maxDist;
   bool enabled;
 } DepthCue;
 
