@@ -25,6 +25,7 @@ typedef struct {
   };
   bool type;
   float intensity;
+  Vec3 attenuation;
 } Light;
 
 typedef struct {
