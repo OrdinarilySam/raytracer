@@ -55,6 +55,7 @@ typedef struct {
   Material* materials;
   Light* lights;
   FILE* output;
+  DepthCue depthcue;
   union {
     float hfov;
     float frustum;
