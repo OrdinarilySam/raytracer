@@ -18,6 +18,9 @@ int main(int argc, char* argv[]) {
   traceRays(scene);
 
   fclose(scene->output);
+  free(scene->lights);
+  free(scene->materials);
+  free(scene->ellipsoids);
   free(scene);
   return 0;
 }
