@@ -23,9 +23,9 @@ typedef struct {
     Vec3 position;
     Vec3 direction;
   };
-  bool type;
   float intensity;
   Vec3 attenuation;
+  bool type;
 } Light;
 
 typedef struct {
@@ -39,21 +39,28 @@ typedef struct {
 } Ray;
 
 typedef struct {
+  Vec3 color;
+  float maxA, minA;
+  float maxDist, minDist;
+  bool enabled;
+} DepthCue;
+
+typedef struct {
   Vec3 eye;
   Vec3 viewdir;
   Vec3 updir;
   Vec3 bkgcolor;
   Image imgsize;
-  bool parallel;
+  Ellipsoid* ellipsoids;
+  Material* materials;
+  Light* lights;
+  FILE* output;
   union {
     float hfov;
     float frustum;
   };
-  Ellipsoid* ellipsoids;
-  Material* materials;
-  Light* lights;
   int numEllipsoids, numMaterials, numLights;
-  FILE* output;
+  bool parallel;
 } Scene;
 
 #endif  // TYPEDEFS_H
