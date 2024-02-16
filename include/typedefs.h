@@ -62,6 +62,7 @@ typedef struct {
   };
   int numEllipsoids, numMaterials, numLights;
   bool parallel;
+  bool softShadows;
 } Scene;
 
 #endif  // TYPEDEFS_H

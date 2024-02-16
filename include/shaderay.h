@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "typedefs.h"
 #include "vec3.h"
@@ -16,5 +17,10 @@ float shadowCheck(Scene *scene, Ray *ray, Ellipsoid *ellipsoid);
 
 float getAttenuation(Light *light, float distance);
 float getDepthCueing(DepthCue *depthcue, float distance);
+
+Vec3 generateOrthogonal(Vec3 *v);
+Vec3 rotateAroundAxis(Vec3 *v, Vec3 *axis, float angle);
+void jitterShadowRay(Ray *shadowRay, Vec3 *orthogonal, Vec3 *ligthDir,
+                     Vec3 *pointHit, float maxScalingFactor);
 
 #endif  // SHADERAY_H

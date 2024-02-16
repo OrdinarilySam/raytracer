@@ -230,6 +230,10 @@ void readScene(Scene* scene, char* filename) {
         scene->depthcue.enabled = true;
         break;
 
+      case SOFT_SHADOWS:
+        scene->softShadows = true;
+        break;
+
       case UNKNOWN:
         break;
     }
@@ -379,6 +383,7 @@ void initializeScene(Scene* scene) {
   scene->bkgcolor = (Vec3){-1, -1, -1};
   scene->parallel = false;
   scene->depthcue.enabled = false;
+  scene->softShadows = true;
 }
 
 Keyword getKeyword(char* keyword) {
@@ -420,6 +425,9 @@ Keyword getKeyword(char* keyword) {
   }
   if (strcmp(keyword, "depthcueing") == 0) {
     return DEPTH_CUEING;
+  }
+  if (strcmp(keyword, "softshadows") == 0) {
+    return SOFT_SHADOWS;
   }
   return UNKNOWN;
 }

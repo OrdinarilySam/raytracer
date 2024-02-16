@@ -22,10 +22,11 @@ typedef enum {
   SPHERE,
   ATT_LIGHT,
   DEPTH_CUEING,
+  SOFT_SHADOWS,
   UNKNOWN
 } Keyword;
 
-Keyword getKeyword(char* keyword);
+eyword(char* keyword);
 void readScene(Scene* scene, char* filename);
 void initializeScene(Scene* scene);
 void validateScene(Scene* scene);
