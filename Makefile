@@ -16,7 +16,6 @@ endif
 
 # Compiler
 CXX = clang
-FLAGS = -Wall -Wextra -Werror -lm
 
 # Directories
 SRC_DIR = src
@@ -39,7 +38,7 @@ all: $(OUT_DIR)/raytracer1b
 
 # Linking the executable
 $(OUT_DIR)/raytracer1b: $(OBJS)
-	$(CXX) -o $@ $^
+	$(CXX) -lm -o $@ $^
 
 # Compiling source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
