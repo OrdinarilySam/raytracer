@@ -294,11 +294,6 @@ void validateScene(Scene* scene) {
     freeAll(scene);
     exit(1);
   }
-  if (scene->numLights == 0) {
-    printf("Error: no lights defined\n");
-    freeAll(scene);
-    exit(1);
-  }
   if (scene->imgsize.width <= 1 || scene->imgsize.height <= 1) {
     printf("Error: image size must be greater than 1\n");
     freeAll(scene);
