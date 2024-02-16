@@ -1,0 +1,31 @@
+imsize 512 512
+eye 0 20 10
+viewdir 0 -3 -5
+hfov 90
+updir 0 1 0
+bkgcolor 0.2 0.2 0.2
+
+light 0 0 -1 0 1
+
+mtlcolor 0.8 0.8 0.8 1 1 1 0.2 0.7 0.01 20 
+sphere 0 0 -10 10
+sphere 0 11 -10 6
+sphere 0 17 -10 4
+
+mtlcolor 0.01 0.01 0.01 0.8 0.8 0.8 0.2 0.8 0.3 100
+sphere -1.5 18 -7 1
+sphere 1.5 18 -7 1 
+
+sphere 0 10 -4 0.6
+sphere 0 12 -4 0.6
+sphere 0 14 -5 0.6
+
+mtlcolor 1 0.5 0 1 0.5 0 0.6 0.5 0 1
+ellipse 0 17 -14 0.7 0.7 15
+
+mtlcolor 0.612 0.455 0.22 0 0 0 0.3 0.3 0 20
+ellipse 0 11 -10 15 0.5 0.5
+
+mtlcolor 0.2 0.2 0.2 0.8 0.8 0.8 0.2 0.6 0.2 30
+ellipse 0 21.5 -10 4 1 4
+ellipse 0 24.5 -10 2 4 2

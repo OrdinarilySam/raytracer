@@ -1,0 +1,19 @@
+imsize 1200 400
+eye 0 0 0
+viewdir 0 0 -1
+parallel 30 
+updir 0 1 0
+bkgcolor 0.2 0.2 0.2
+
+light 0 0 -1 0 1
+
+mtlcolor 1 0 0 1 1 1 0 0.2 0 1
+sphere -12 0 -4 2
+mtlcolor 1 0 0 1 1 1 0 0.4 0 1
+sphere -6 0 -4 2
+mtlcolor 1 0 0 1 1 1 0 0.6 0 1
+sphere 0 0 -4 2
+mtlcolor 1 0 0 1 1 1 0 0.8 0 1
+sphere 6 0 -4 2
+mtlcolor 1 0 0 1 1 1 0 1 0 1
+sphere 12 0 -4 2
