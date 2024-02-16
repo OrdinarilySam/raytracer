@@ -26,7 +26,7 @@ typedef enum {
   UNKNOWN
 } Keyword;
 
-eyword(char* keyword);
+Keyword getKeyword(char* keyword);
 void readScene(Scene* scene, char* filename);
 void initializeScene(Scene* scene);
 void validateScene(Scene* scene);
