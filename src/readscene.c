@@ -378,7 +378,6 @@ void initializeScene(Scene* scene) {
   scene->bkgcolor = (Vec3){-1, -1, -1};
   scene->parallel = false;
   scene->depthcue.enabled = false;
-  scene->softShadows = true;
 }
 
 Keyword getKeyword(char* keyword) {

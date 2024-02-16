@@ -61,7 +61,7 @@ test: $(OUT_DIR)/raytracer1b
 
 # Clean target
 clean:
-	rm -rf $(OBJ_DIR) $(OUT_DIR)/raytracer1* $(DATA_DIR)/*.ppm
+	rm -rf $(OBJ_DIR) $(OUT_DIR)/raytracer1* $(DATA_DIR)/*.ppm $(DATA_DIR)/*.jpeg
 
 # Run program with a user-specified input file
 # Usage: make run INPUT=filename.txt
