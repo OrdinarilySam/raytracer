@@ -1,8 +1,22 @@
 # Configuration
 -include config/config.local.mk
-ifndef CXX
-    CXX=clang
+
+# Testing configuration
+ifndef NUM_INPUTS
+	NUM_INPUTS = 1
 endif
+
+ifndef FILE_NAME
+	FILE_NAME = example
+endif
+
+ifndef FILE_EXT
+	FILE_EXT = txt
+endif
+
+# Compiler
+CXX = clang
+FLAGS = -Wall -Wextra -Werror -lm
 
 # Directories
 SRC_DIR = src
@@ -47,7 +61,7 @@ test: $(OUT_DIR)/raytracer1b
 
 # Clean target
 clean:
-	rm -rf $(OBJ_DIR) $(OUT_DIR)/raytracer1* *.ppm
+	rm -rf $(OBJ_DIR) $(OUT_DIR)/raytracer1* $(DATA_DIR)/*.ppm
 
 # Run program with a user-specified input file
 # Usage: make run INPUT=filename.txt
