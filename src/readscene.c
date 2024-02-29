@@ -381,6 +381,12 @@ void initializeScene(Scene* scene) {
 }
 
 Keyword getKeyword(char* keyword) {
+  if (strcmp(keyword, "v") == 0) {
+    return VERTEX;
+  }
+  if (strcmp(keyword, "f") == 0) {
+    return FACE;
+  }
   if (strcmp(keyword, "sphere") == 0) {
     return SPHERE;
   }

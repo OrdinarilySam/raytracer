@@ -23,6 +23,8 @@ typedef enum {
   ATT_LIGHT,
   DEPTH_CUEING,
   SOFT_SHADOWS,
+  VERTEX,
+  FACE,
   UNKNOWN
 } Keyword;
 
