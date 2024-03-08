@@ -22,6 +22,10 @@ void readScene(Scene* scene, char* filename) {
       scene->numLights++;
     } else if (strcmp(buffer, "attlight") == 0) {
       scene->numLights++;
+    } else if (strcmp(buffer, "f") == 0) {
+      scene->numFaces++;
+    } else if (strcmp(buffer, "v") == 0) {
+      scene->numVertices++;
     }
   }
   fclose(file);
@@ -30,10 +34,14 @@ void readScene(Scene* scene, char* filename) {
       (Ellipsoid*)malloc(scene->numEllipsoids * sizeof(Ellipsoid));
   scene->materials = (Material*)malloc(scene->numMaterials * sizeof(Material));
   scene->lights = (Light*)malloc(scene->numLights * sizeof(Light));
+  scene->faces = (Vec3*)malloc(scene->numFaces * sizeof(Vec3));
+  scene->vertices = (Vec3*)malloc(scene->numVertices * sizeof(Vec3));
+
+
 
   file = fopen(filename, "r");
   if (file == NULL) {
-    free(scene);
+    freeAll(scene);
     printf("Error: file %s not found\n", filename);
     exit(1);
   }
@@ -41,6 +49,8 @@ void readScene(Scene* scene, char* filename) {
   int ellipsoidIndex = 0;
   int materialIndex = 0;
   int lightIndex = 0;
+  int vertexIndex = 0;
+  int faceIndex = 0;
 
   bool foundEye = false;
 
@@ -234,6 +244,30 @@ void readScene(Scene* scene, char* filename) {
         scene->softShadows = true;
         break;
 
+      case VERTEX: {
+        float x, y, z;
+        fscanf(file, "%f %f %f", &x, &y, &z);
+        Vec3 vertex = (Vec3){x, y, z};
+        scene->vertices[vertexIndex] = vertex;
+        vertexIndex++;
+        break;
+      }
+
+      case FACE: {
+        int v1, v2, v3;
+        fscanf(file, "%d %d %d", &v1, &v2, &v3);
+        Vec3 face = (Vec3){v1, v2, v3};
+        if (v1 < 1 || v2 < 1 || v3 < 1) {
+          printf("Error: vertex index out of bounds\n");
+          freeAll(scene);
+          fclose(file);
+          exit(1);
+        }
+        scene->faces[faceIndex] = face;
+        faceIndex++;
+        break;
+      }
+
       case UNKNOWN:
         break;
     }
@@ -365,6 +399,8 @@ void freeAll(Scene* scene) {
   free(scene->ellipsoids);
   free(scene->materials);
   free(scene->lights);
+  free(scene->faces);
+  free(scene->vertices);
   free(scene);
 }
 

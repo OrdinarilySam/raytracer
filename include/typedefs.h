@@ -54,13 +54,15 @@ typedef struct {
   Ellipsoid* ellipsoids;
   Material* materials;
   Light* lights;
+  Vec3* faces;
+  Vec3* vertices;
   FILE* output;
   DepthCue depthcue;
   union {
     float hfov;
     float frustum;
   };
-  int numEllipsoids, numMaterials, numLights;
+  int numEllipsoids, numMaterials, numLights, numFaces, numVertices;
   bool parallel;
   bool softShadows;
 } Scene;
