@@ -13,6 +13,11 @@ typedef struct {
 } Ellipsoid;
 
 typedef struct {
+  Vec3 vertices;
+  int material;
+} Triangle;
+
+typedef struct {
   Vec3 diffuseColor;
   Vec3 specularColor;
   float ka, kd, ks, n;
@@ -54,7 +59,7 @@ typedef struct {
   Ellipsoid* ellipsoids;
   Material* materials;
   Light* lights;
-  Vec3* faces;
+  Triangle* faces;
   Vec3* vertices;
   FILE* output;
   DepthCue depthcue;

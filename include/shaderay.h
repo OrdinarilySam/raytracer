@@ -8,9 +8,15 @@
 #include "typedefs.h"
 #include "vec3.h"
 
-float rayIntersection(Ray *ray, Ellipsoid *ellipsoid);
+float raySphereIntersection(Ray *ray, Ellipsoid *ellipsoid);
+float rayTriangleIntersection(Scene *scene, Ray *ray, Triangle *face);
+// todo implement and utilize this function
+Vec3 calculateBarycentric(Ray *ray, Triangle *face);
 
 void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t);
+// todo implement these functions
+void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t);
+void shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t);
 
 Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point);
 float shadowCheck(Scene *scene, Ray *ray, Ellipsoid *ellipsoid);

@@ -70,11 +70,13 @@ void traceRays(Scene* scene) {
 void traceRay(Scene* scene, Ray* ray) {
   float minimumDistance = INFINITY;
   Ellipsoid* closestEllipsoid;
+  Triangle* closestFace;
   bool hit = false;
+  bool isSphere = true;
 
   for (int i = 0; i < scene->numEllipsoids; i++) {
     Ellipsoid* ellipsoid = &scene->ellipsoids[i];
-    float t = rayIntersection(ray, ellipsoid);
+    float t = raySphereIntersection(ray, ellipsoid);
 
     if (t > 0 && t < minimumDistance) {
       minimumDistance = t;
@@ -83,15 +85,33 @@ void traceRay(Scene* scene, Ray* ray) {
     }
   }
 
-  if (hit) {
-    shadeRay(scene, ray, closestEllipsoid, minimumDistance);
-  } else {
+  for (int i = 0; i < scene->numFaces; i++) {
+    Triangle* face = &scene->faces[i];
+    float t = rayTriangleIntersection(scene, ray, face);
+
+    if (t > 0 && t < minimumDistance) {
+      isSphere = false;
+      minimumDistance = t;
+      closestFace = face;
+      hit = true;
+    }
+  }
+
+  if (!hit) {
     fprintf(scene->output, "%d %d %d\n", (int)(scene->bkgcolor.r * 255),
             (int)(scene->bkgcolor.g * 255), (int)(scene->bkgcolor.b * 255));
+    return;
+  }
+
+  // todo: shaderay or shadetriangle
+  if (isSphere) {
+    shadeRay(scene, ray, closestEllipsoid, minimumDistance);
+  } else {
+    shadeTriangle(scene, ray, closestFace, minimumDistance);   
   }
 }
 
-float rayIntersection(Ray* ray, Ellipsoid* ellipsoid) {
+float raySphereIntersection(Ray* ray, Ellipsoid* ellipsoid) {
   float a, b, c;
   {
     Vec3 temp;
@@ -126,4 +146,46 @@ float rayIntersection(Ray* ray, Ellipsoid* ellipsoid) {
   }
 
   return t1 < t2 ? t1 : t2;
+}
+
+float rayTriangleIntersection(Scene* scene, Ray* ray, Triangle* face) {
+  Vec3 vertices = face->vertices;
+  Vec3 e1 = pointSub(scene->vertices[vertices.v2], scene->vertices[vertices.v1]);
+  Vec3 e2 = pointSub(scene->vertices[vertices.v3], scene->vertices[vertices.v1]);
+  Vec3 n = cross(e1, e2);
+  float D = -dot(&n, &scene->vertices[vertices.v1]);
+  if (dot(&n, &ray->direction) == 0) {
+    return -1;
+  }
+
+  float t = -(dot(&n, &ray->origin) + D) / dot(&n, &ray->direction);
+
+  if (t < 0) {
+    return -1;
+  }
+
+  float d11 = dot(&e1, &e1);
+  float d12 = dot(&e1, &e2);
+  float d22 = dot(&e2, &e2);
+
+  float determinant = d11 * d22 - d12 * d12;
+  if (determinant == 0) {
+    return -1;
+  }
+
+  Vec3 ep = pointSub(pointAdd(ray->origin, scale(ray->direction, t)), scene->vertices[vertices.v1]);
+  float d1p = dot(&ep, &e1);
+  float d2p = dot(&ep, &e2);
+
+  float beta = (d22 * d1p - d12 * d2p) / determinant;
+  float gamma = (d11 * d2p - d12 * d1p) / determinant;
+
+  if (beta < 0 || gamma < 0 ||
+      beta > 1 || gamma > 1 ||
+      beta + gamma > 1) {
+    return -1;
+  }
+
+  return t;
+  
 }

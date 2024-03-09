@@ -25,9 +25,6 @@ typedef enum {
   SOFT_SHADOWS,
   VERTEX,
   FACE,
-  VERTEX_NORMAL,
-  VERTEX_TEXTURE,
-  TEXTURE,
   UNKNOWN
 } Keyword;
 

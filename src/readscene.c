@@ -34,8 +34,15 @@ void readScene(Scene* scene, char* filename) {
       (Ellipsoid*)malloc(scene->numEllipsoids * sizeof(Ellipsoid));
   scene->materials = (Material*)malloc(scene->numMaterials * sizeof(Material));
   scene->lights = (Light*)malloc(scene->numLights * sizeof(Light));
-  scene->faces = (Vec3*)malloc(scene->numFaces * sizeof(Vec3));
+  scene->faces = (Triangle*)malloc(scene->numFaces * sizeof(Triangle));
   scene->vertices = (Vec3*)malloc(scene->numVertices * sizeof(Vec3));
+
+  if (scene->ellipsoids == NULL || scene->materials == NULL ||
+      scene->lights == NULL || scene->faces == NULL || scene->vertices == NULL) {
+    freeAll(scene);
+    printf("Error: malloc failed\n");
+    exit(1);
+  }
 
 
 
@@ -45,6 +52,8 @@ void readScene(Scene* scene, char* filename) {
     printf("Error: file %s not found\n", filename);
     exit(1);
   }
+
+  printf("Reading scene file %s\n", filename);
 
   int ellipsoidIndex = 0;
   int materialIndex = 0;
@@ -254,10 +263,20 @@ void readScene(Scene* scene, char* filename) {
       }
 
       case FACE: {
+        if (materialIndex == 0) {
+          printf("Error: must define material before face\n");
+          freeAll(scene);
+          fclose(file);
+          exit(1);
+        }
         int v1, v2, v3;
         fscanf(file, "%d %d %d", &v1, &v2, &v3);
-        Vec3 face = (Vec3){v1, v2, v3};
-        if (v1 < 1 || v2 < 1 || v3 < 1) {
+        Vec3 vertices;
+        vertices.v1 = v1 - 1;
+        vertices.v2 = v2 - 1;
+        vertices.v3 = v3 - 1;
+        Triangle face = (Triangle){vertices, materialIndex - 1};
+        if (v1 < 0 || v2 < 0 || v3 < 0) {
           printf("Error: vertex index out of bounds\n");
           freeAll(scene);
           fclose(file);
@@ -274,6 +293,7 @@ void readScene(Scene* scene, char* filename) {
   }
 
   fclose(file);
+  // printScene(scene);
 
   if (foundEye == false) {
     printf("Error: eye not found\n");
@@ -323,11 +343,11 @@ void validateScene(Scene* scene) {
     freeAll(scene);
     exit(1);
   }
-  if (scene->numEllipsoids == 0) {
-    printf("Error: no ellipsoids defined\n");
-    freeAll(scene);
-    exit(1);
-  }
+  // if (scene->numEllipsoids == 0) {
+  //   printf("Error: no ellipsoids defined\n");
+  //   freeAll(scene);
+  //   exit(1);
+  // }
   if (scene->imgsize.width <= 1 || scene->imgsize.height <= 1) {
     printf("Error: image size must be greater than 1\n");
     freeAll(scene);

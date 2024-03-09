@@ -16,6 +16,7 @@ endif
 
 # Compiler
 CXX = clang
+CXXFLAGS = -g
 
 # Directories
 SRC_DIR = src
@@ -32,17 +33,17 @@ OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 .DEFAULT_GOAL := all
 
 # Targets
-all: $(OUT_DIR)/raytracer1b
+all: $(OUT_DIR)/raytracer1c
 
 .PHONY: all clean test run
 
 # Linking the executable
-$(OUT_DIR)/raytracer1b: $(OBJS)
-	$(CXX) -lm -o $@ $^
+$(OUT_DIR)/raytracer1c: $(OBJS)
+	$(CXX) -g -lm -o $@ $^
 
 # Compiling source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CXX) -I $(INC_DIR) -c $< -o $@
+	$(CXX) -g -I $(INC_DIR) -c $< -o $@
 
 # Create the object files directory
 $(OBJ_DIR):
@@ -53,7 +54,7 @@ $(OUT_DIR):
 	mkdir -p $@
 
 # Test target
-test: $(OUT_DIR)/raytracer1b
+test: $(OUT_DIR)/raytracer1c
 	@for number in $$(seq 1 $(NUM_INPUTS)); do \
 		./$(OUT_DIR)/raytracer1b $(DATA_DIR)/$(FILE_NAME)$$number.$(FILE_EXT); \
 	done
@@ -64,5 +65,5 @@ clean:
 
 # Run program with a user-specified input file
 # Usage: make run INPUT=filename.txt
-run: $(OUT_DIR)/raytracer1b
-	@./$(OUT_DIR)/raytracer1b $(DATA_DIR)/$(INPUT)
+run: $(OUT_DIR)/raytracer1c
+	@./$(OUT_DIR)/raytracer1c $(DATA_DIR)/$(INPUT)
