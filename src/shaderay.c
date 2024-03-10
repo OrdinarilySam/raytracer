@@ -9,26 +9,30 @@ void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
     material = scene->materials[scene->numMaterials - 1];
     int matIndex = face->material;
 
-    // printf("matIndex: %d\n", matIndex);
-    int height = scene->textures[matIndex].height - 1;
-    int width = scene->textures[matIndex].width - 1;
+    Texture texture = scene->textures[matIndex];
+    int height = texture.height - 1;
+    int width = texture.width - 1;
+    Texel texel = getTriangleTexel(scene, face, &barycentric);
 
-    float wIndex1 = (scene->vertexTextures[face->texture.v1].u);
-    float hIndex1 = (scene->vertexTextures[face->texture.v1].v);
+    float dummy;
+    float x = modff(texel.u, &dummy) * (float)width;
+    float y = modff(texel.v, &dummy) * (float)height;
 
-    float wIndex2 = (scene->vertexTextures[face->texture.v2].u);
-    float hIndex2 = (scene->vertexTextures[face->texture.v2].v);
+    int i = (int)x;
+    int j = (int)y;
 
-    float wIndex3 = (scene->vertexTextures[face->texture.v3].u);
-    float hIndex3 = (scene->vertexTextures[face->texture.v3].v);
+    int i2 = i+1 > width ? i : i+1;
+    int j2 = j+1 > height ? j : j+1;
 
-    float avgW = barycentric.x * wIndex1 + barycentric.y * wIndex2 + barycentric.z * wIndex3;
-    float avgH = barycentric.x * hIndex1 + barycentric.y * hIndex2 + barycentric.z * hIndex3;
+    float alpha = x - (float)i;
+    float beta = y - (float)j;
 
-    int x = (int)(avgW * width);
-    int y = (int)(avgH * height);
+    Vec3 color1 = scale(texture.pixels[j][i], (1 - alpha) * (1 - beta));
+    Vec3 color2 = scale(texture.pixels[j][i2], alpha * (1 - beta));
+    Vec3 color3 = scale(texture.pixels[j2][i], (1 - alpha) * beta);
+    Vec3 color4 = scale(texture.pixels[j2][i2], alpha * beta);
 
-    material.diffuseColor = scene->textures[matIndex].pixels[y][x];
+    material.diffuseColor = pointAdd(color1, pointAdd(color2, pointAdd(color3, color4)));
 
   } else {
     Material material = scene->materials[face->material];
@@ -39,9 +43,9 @@ void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
   Vec3 viewDir = scale(ray->direction, -1);
   Vec3 normal;
   if (face->type == VERTICES_NORMALS || face->type == VERTICES_NORMALS_TEXTURES) {
-    normal = pointAdd(scale(scene->normals[face->normal.n1], barycentric.x),
-                      pointAdd(scale(scene->normals[face->normal.n2], barycentric.y),
-                               scale(scene->normals[face->normal.n3], barycentric.z)));
+    normal = pointAdd(scale(scene->normals[face->normals.n1], barycentric.x),
+                      pointAdd(scale(scene->normals[face->normals.n2], barycentric.y),
+                               scale(scene->normals[face->normals.n3], barycentric.z)));
   } else {
     Indices vertices = face->vertices;
     Vec3 e1 = pointSub(scene->vertices[vertices.v2], scene->vertices[vertices.v1]);
@@ -159,11 +163,25 @@ void shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
     int height = texture.height - 1;
     int width = texture.width - 1;
 
-    int x = (int)(texel.u * width);
-    int y = (int)(texel.v * height);
+    float dummy;
+    float x = modff(texel.u, &dummy) * (float)width;
+    float y = modff(texel.v, &dummy) * (float)height;
 
-    material.diffuseColor = texture.pixels[y][x];
+    int i = (int)x;
+    int j = (int)y;
 
+    int i2 = i+1 > width ? i : i+1;
+    int j2 = j+1 > height ? j : j+1;
+
+    float alpha = x - (float)i;
+    float beta = y - (float)j;
+
+    Vec3 color1 = scale(texture.pixels[j][i], (1 - alpha) * (1 - beta));
+    Vec3 color2 = scale(texture.pixels[j][i2], alpha * (1 - beta));
+    Vec3 color3 = scale(texture.pixels[j2][i], (1 - alpha) * beta);
+    Vec3 color4 = scale(texture.pixels[j2][i2], alpha * beta);
+
+    material.diffuseColor = pointAdd(color1, pointAdd(color2, pointAdd(color3, color4)));
   } else {
     material = scene->materials[ellipsoid->material];
   }
@@ -407,5 +425,38 @@ Texel getSphereTexel(Vec3 *normal) {
     theta += 2 * M_PI;
   }
   float u = theta / (2 * M_PI);
+
+  if (u < 0) {
+    u = 0;
+  } 
+
+  if (v < 0) {
+    v = 0;
+  } 
+
+  return (Texel){u, v};
+}
+
+Texel getTriangleTexel(Scene *scene, Triangle *face, Vec3 *barycentric) {
+  float wIndex1 = (scene->vertexTextures[face->textures.v1].u);
+  float hIndex1 = (scene->vertexTextures[face->textures.v1].v);
+
+  float wIndex2 = (scene->vertexTextures[face->textures.v2].u);
+  float hIndex2 = (scene->vertexTextures[face->textures.v2].v);
+
+  float wIndex3 = (scene->vertexTextures[face->textures.v3].u);
+  float hIndex3 = (scene->vertexTextures[face->textures.v3].v);
+
+  float u = barycentric->x * wIndex1 + barycentric->y * wIndex2 + barycentric->z * wIndex3;
+  float v = barycentric->x * hIndex1 + barycentric->y * hIndex2 + barycentric->z * hIndex3;
+
+  if (u < 0) {
+    u = 0;
+  } 
+
+  if (v < 0) {
+    v = 0;
+  } 
+
   return (Texel){u, v};
 }

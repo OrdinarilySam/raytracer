@@ -1,5 +1,5 @@
 # Configuration
--include config/config.local.mk
+-include config/config.default.mk
 
 # Testing configuration
 ifndef NUM_INPUTS
@@ -16,7 +16,7 @@ endif
 
 # Compiler
 CXX = clang
-CXXFLAGS = -g
+CXXFLAGS =
 
 # Directories
 SRC_DIR = src
@@ -39,11 +39,11 @@ all: $(OUT_DIR)/raytracer1c
 
 # Linking the executable
 $(OUT_DIR)/raytracer1c: $(OBJS)
-	$(CXX) -g -lm -o $@ $^
+	$(CXX) $(CXXFLAGS) -lm -o $@ $^
 
 # Compiling source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CXX) -g -I $(INC_DIR) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I $(INC_DIR) -c $< -o $@
 
 # Create the object files directory
 $(OBJ_DIR):

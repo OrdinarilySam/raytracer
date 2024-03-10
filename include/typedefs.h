@@ -51,8 +51,8 @@ typedef struct {
 
 typedef struct {
   Indices vertices;
-  Indices normal;
-  Indices texture;
+  Indices normals;
+  Indices textures;
   TriangleType type;
   int material;
 } Triangle;

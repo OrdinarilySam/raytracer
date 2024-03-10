@@ -27,4 +27,5 @@ void jitterShadowRay(Ray *shadowRay, Vec3 *orthogonal, Vec3 *ligthDir,
                      Vec3 *pointHit, float maxScalingFactor);
 
 Texel getSphereTexel(Vec3 *normal);
+Texel getTriangleTexel(Scene *scene, Triangle *face, Vec3 *barycentric);
 #endif  // SHADERAY_H

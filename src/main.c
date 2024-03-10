@@ -19,5 +19,6 @@ int main(int argc, char* argv[]) {
 
   fclose(scene->output);
   freeAll(scene);
+  printf("Done\n\n");
   return 0;
 }

@@ -43,11 +43,14 @@ void readScene(Scene* scene, char* filename) {
   scene->faces = (Triangle*)malloc(scene->numFaces * sizeof(Triangle));
   scene->vertices = (Vec3*)malloc(scene->numVertices * sizeof(Vec3));
   scene->normals = (Vec3*)malloc(scene->numNormals * sizeof(Vec3));
-  scene->vertexTextures = (Texel*)malloc(scene->numVertexTextures * sizeof(Texel));
+  scene->vertexTextures =
+      (Texel*)malloc(scene->numVertexTextures * sizeof(Texel));
   scene->textures = (Texture*)malloc(scene->numFaces * sizeof(Texture));
 
   if (scene->ellipsoids == NULL || scene->materials == NULL ||
-      scene->lights == NULL || scene->faces == NULL || scene->vertices == NULL || scene->normals == NULL || scene->textures == NULL || scene->vertexTextures == NULL) {
+      scene->lights == NULL || scene->faces == NULL ||
+      scene->vertices == NULL || scene->normals == NULL ||
+      scene->textures == NULL || scene->vertexTextures == NULL) {
     freeAll(scene);
     printf("Error: malloc failed\n");
     exit(1);
@@ -56,7 +59,6 @@ void readScene(Scene* scene, char* filename) {
   for (int i = 0; i < scene->numTextures; i++) {
     scene->textures[i].pixels = NULL;
   }
-
 
   file = fopen(filename, "r");
   if (file == NULL) {
@@ -78,6 +80,7 @@ void readScene(Scene* scene, char* filename) {
 
   int maxNormalIndex = -1;
   int maxTextureIndex = -1;
+  int maxVertexIndex = -1;
 
   bool foundEye = false;
   bool onTexture = false;
@@ -300,48 +303,41 @@ void readScene(Scene* scene, char* filename) {
           fclose(file);
           exit(1);
         }
-        int v1, v2, v3, t1, t2, t3, n1, n2, n3;
+        int v1, v2, v3, t1, t2, t3, n1, n2, n3 = 0;
         char line[MAXCHAR];
         Triangle face;
         fgets(line, MAXCHAR, file);
 
-        if (sscanf(line, "%d/%d/%d %d/%d/%d %d/%d/%d", &v1, &t1, &n1, &v2,
-                   &t2, &n2, &v3, &t3, &n3) == 9) {
+        if (sscanf(line, "%d/%d/%d %d/%d/%d %d/%d/%d", &v1, &t1, &n1, &v2, &t2,
+                   &n2, &v3, &t3, &n3) == 9) {
           face.type = VERTICES_NORMALS_TEXTURES;
-          Indices vertexTextures = (Indices){t1 - 1, t2 - 1, t3 - 1};
-          Indices normals = (Indices){n1 - 1, n2 - 1, n3 - 1};
-          face.texture = vertexTextures;
-          face.normal = normals;
+          maxNormalIndex = maxNormalIndex < n1 ? n1 : maxNormalIndex;
+          maxNormalIndex = maxNormalIndex < n2 ? n2 : maxNormalIndex;
+          maxNormalIndex = maxNormalIndex < n3 ? n3 : maxNormalIndex;
           maxTextureIndex = maxTextureIndex < t1 ? t1 : maxTextureIndex;
           maxTextureIndex = maxTextureIndex < t2 ? t2 : maxTextureIndex;
           maxTextureIndex = maxTextureIndex < t3 ? t3 : maxTextureIndex;
+        }
+
+        else if (sscanf(line, "%d//%d %d//%d %d//%d", &v1, &n1, &v2, &n2, &v3,
+                        &n3) == 6) {
+          face.type = VERTICES_NORMALS;
           maxNormalIndex = maxNormalIndex < n1 ? n1 : maxNormalIndex;
           maxNormalIndex = maxNormalIndex < n2 ? n2 : maxNormalIndex;
           maxNormalIndex = maxNormalIndex < n3 ? n3 : maxNormalIndex;
         }
 
-        else if (sscanf(line, "%d//%d %d//%d %d//%d", &v1, &n1, &v2, &n2, &v3,
-                   &n3) == 6) {
-          Indices normals = (Indices){n1 - 1, n2 - 1, n3 - 1};
-          face.normal = normals;
-          face.type = VERTICES_NORMALS;
-          if (n1 < 1 || n2 < 1 || n3 < 1) {
-            printf("Error: normal index out of bounds\n");
-            freeAll(scene);
-            fclose(file);
-            exit(1);
-          }
-        }
-
         else if (sscanf(line, "%d/%d %d/%d %d/%d", &v1, &t1, &v2, &t2, &v3,
-                   &t3) == 6) {
+                        &t3) == 6) {
           face.type = VERTICES_TEXTURES;
-          face.texture = (Indices){t1 - 1, t2 - 1, t3 - 1};
+          maxTextureIndex = maxTextureIndex < t1 ? t1 : maxTextureIndex;
+          maxTextureIndex = maxTextureIndex < t2 ? t2 : maxTextureIndex;
+          maxTextureIndex = maxTextureIndex < t3 ? t3 : maxTextureIndex;
         }
 
         else if (sscanf(line, "%d %d %d", &v1, &v2, &v3) == 3) {
           face.type = VERTICES_ONLY;
-        } 
+        }
 
         else {
           printf("Error: invalid face format\n");
@@ -350,7 +346,9 @@ void readScene(Scene* scene, char* filename) {
           exit(1);
         }
 
-        if ((face.type == VERTICES_NORMALS_TEXTURES || face.type == VERTICES_TEXTURES) && !onTexture) {
+        if ((face.type == VERTICES_NORMALS_TEXTURES ||
+             face.type == VERTICES_TEXTURES) &&
+            !onTexture) {
           printf("Error: must define texture before face\n");
           freeAll(scene);
           fclose(file);
@@ -362,14 +360,42 @@ void readScene(Scene* scene, char* filename) {
         } else {
           face.material = materialIndex - 1;
         }
-        Indices vertices = (Indices){v1 - 1 , v2 - 1, v3 - 1};
-        face.vertices = vertices;
+
+        face.vertices = (Indices){v1 - 1, v2 - 1, v3 - 1};
+        face.normals = (Indices){n1 - 1, n2 - 1, n3 - 1};
+        face.textures = (Indices){t1 - 1, t2 - 1, t3 - 1};
+
+        maxVertexIndex = maxVertexIndex < v1 ? v1 : maxVertexIndex;
+        maxVertexIndex = maxVertexIndex < v2 ? v2 : maxVertexIndex;
+        maxVertexIndex = maxVertexIndex < v3 ? v3 : maxVertexIndex;
+
         if (v1 < 1 || v2 < 1 || v3 < 1) {
           printf("Error: vertex index out of bounds\n");
           freeAll(scene);
           fclose(file);
           exit(1);
         }
+
+        if (face.type == VERTICES_NORMALS ||
+            face.type == VERTICES_NORMALS_TEXTURES) {
+          if (n1 < 1 || n2 < 1 || n3 < 1) {
+            printf("Error: normal index out of bounds\n");
+            freeAll(scene);
+            fclose(file);
+            exit(1);
+          }
+        }
+
+        if (face.type == VERTICES_TEXTURES ||
+            face.type == VERTICES_NORMALS_TEXTURES) {
+          if (t1 < 1 || t2 < 1 || t3 < 1) {
+            printf("Error: texture index out of bounds\n");
+            freeAll(scene);
+            fclose(file);
+            exit(1);
+          }
+        }
+
         scene->faces[faceIndex] = face;
         faceIndex++;
         break;
@@ -411,14 +437,26 @@ void readScene(Scene* scene, char* filename) {
   fclose(file);
   // printScene(scene);
 
-  if (maxNormalIndex >= scene->numNormals) {
+  if (maxNormalIndex > scene->numNormals) {
+    printf("maxNormalIndex: %d\n", maxNormalIndex);
+    printf("scene->numNormals: %d\n", scene->numNormals);
     printf("Error: normal index out of bounds\n");
     freeAll(scene);
     exit(1);
   }
 
-  if (maxTextureIndex >= scene->numTextures) {
+  if (maxTextureIndex > scene->numVertexTextures) {
+    printf("maxTextureIndex: %d\n", maxTextureIndex);
+    printf("scene->numTextures: %d\n", scene->numTextures);
     printf("Error: texture index out of bounds\n");
+    freeAll(scene);
+    exit(1);
+  }
+
+  if (maxVertexIndex > scene->numVertices) {
+    printf("maxVertexIndex: %d\n", maxVertexIndex);
+    printf("scene->numVertices: %d\n", scene->numVertices);
+    printf("Error: vertex index out of bounds\n");
     freeAll(scene);
     exit(1);
   }
@@ -691,16 +729,15 @@ void printScene(Scene* scene) {
 void parsePPM(Texture* texture, char* filename, char* inputPath) {
   char newname[MAXCHAR];
   {
-  char path[MAXCHAR];
-  char* lastSlash = strrchr(inputPath, '/');
-  if (lastSlash == NULL) {
-    sprintf(newname, "texture/%s", filename);
-  } else {
-    strncpy(path, inputPath, lastSlash - inputPath + 1);
-    newname[lastSlash - inputPath + 1] = '\0';
-    sprintf(newname, "%stexture/%s", path, filename);
-    printf("newname: %s\n", newname);
-  }
+    char path[MAXCHAR];
+    char* lastSlash = strrchr(inputPath, '/');
+    if (lastSlash == NULL) {
+      sprintf(newname, "texture/%s", filename);
+    } else {
+      strncpy(path, inputPath, lastSlash - inputPath + 1);
+      newname[lastSlash - inputPath + 1] = '\0';
+      sprintf(newname, "%stexture/%s", path, filename);
+    }
   }
 
   FILE* fp = fopen(newname, "r");
@@ -714,7 +751,7 @@ void parsePPM(Texture* texture, char* filename, char* inputPath) {
   {
     char buffer[MAXCHAR];
     fscanf(fp, "%s", buffer);
-    if(strcmp(buffer, "P3") != 0) {
+    if (strcmp(buffer, "P3") != 0) {
       printf("Error: invalid PPM file\n");
       fclose(fp);
       exit(1);
@@ -750,13 +787,10 @@ void parsePPM(Texture* texture, char* filename, char* inputPath) {
     for (int j = 0; j < width; j++) {
       int r, g, b;
       fscanf(fp, "%d %d %d", &r, &g, &b);
-      texture->pixels[i][j] = (Vec3){(float)r / maxColor, (float)g / maxColor, (float)b / maxColor};
+      texture->pixels[i][j] =
+          (Vec3){(float)r / maxColor, (float)g / maxColor, (float)b / maxColor};
     }
   }
 
-
   char buffer[MAXCHAR];
-
-  
-
 }
