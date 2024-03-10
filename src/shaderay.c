@@ -101,11 +101,9 @@ void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
       } else {
         if (light.type &&
             shadowCheck(scene, &shadowRay, NULL, face) < distToLight) {
-              printf("found shadow\n");
           shadow = 0;
         } else if (!light.type &&
                    shadowCheck(scene, &shadowRay, NULL, face) != INFINITY) {
-              printf("found shadow\n");
           shadow = 0;
         }
       }
@@ -307,8 +305,6 @@ float shadowCheck(Scene *scene, Ray *shadowRay, Ellipsoid *ellipsoid, Triangle *
     }
   }
 
-  if(minimumDistance < INFINITY)
-    printf("minDist: %f\n", minimumDistance);
   return minimumDistance;
 }
 

@@ -389,7 +389,7 @@ void readScene(Scene* scene, char* filename) {
         char textureName[MAXCHAR];
         fscanf(file, "%s", textureName);
         Texture texture;
-        parsePPM(&texture, textureName);
+        parsePPM(&texture, textureName, filename);
         scene->textures[textureIndex] = texture;
         textureIndex++;
         break;
@@ -688,9 +688,20 @@ void printScene(Scene* scene) {
   }
 }
 
-void parsePPM(Texture* texture, char* filename) {
+void parsePPM(Texture* texture, char* filename, char* inputPath) {
   char newname[MAXCHAR];
-  sprintf(newname, "data/texture/%s", filename);
+  {
+  char path[MAXCHAR];
+  char* lastSlash = strrchr(inputPath, '/');
+  if (lastSlash == NULL) {
+    sprintf(newname, "texture/%s", filename);
+  } else {
+    strncpy(path, inputPath, lastSlash - inputPath + 1);
+    newname[lastSlash - inputPath + 1] = '\0';
+    sprintf(newname, "%stexture/%s", path, filename);
+    printf("newname: %s\n", newname);
+  }
+  }
 
   FILE* fp = fopen(newname, "r");
   if (fp == NULL) {
@@ -700,7 +711,15 @@ void parsePPM(Texture* texture, char* filename) {
 
   int width, height, maxColor;
   // remove P3
-  fscanf(fp, "%*s");
+  {
+    char buffer[MAXCHAR];
+    fscanf(fp, "%s", buffer);
+    if(strcmp(buffer, "P3") != 0) {
+      printf("Error: invalid PPM file\n");
+      fclose(fp);
+      exit(1);
+    }
+  }
   fscanf(fp, "%d %d", &width, &height);
   fscanf(fp, "%d", &maxColor);
 

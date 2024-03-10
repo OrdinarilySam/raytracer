@@ -41,7 +41,7 @@ void freeAll(Scene* scene);
 FILE* createOutputFile(char* filename, int imgWidth, int imgHeight);
 void printScene(Scene* scene);
 
-void parsePPM(Texture* texture, char* filename);
+void parsePPM(Texture* texture, char* filename, char* inputPath);
 
 
 
