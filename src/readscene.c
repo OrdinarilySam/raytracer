@@ -47,12 +47,15 @@ void readScene(Scene* scene, char* filename) {
   scene->textures = (Texture*)malloc(scene->numFaces * sizeof(Texture));
 
   if (scene->ellipsoids == NULL || scene->materials == NULL ||
-      scene->lights == NULL || scene->faces == NULL || scene->vertices == NULL || scene->normals == NULL || scene->textures == NULL) {
+      scene->lights == NULL || scene->faces == NULL || scene->vertices == NULL || scene->normals == NULL || scene->textures == NULL || scene->vertexTextures == NULL) {
     freeAll(scene);
     printf("Error: malloc failed\n");
     exit(1);
   }
 
+  for (int i = 0; i < scene->numTextures; i++) {
+    scene->textures[i].pixels = NULL;
+  }
 
 
   file = fopen(filename, "r");
@@ -72,6 +75,9 @@ void readScene(Scene* scene, char* filename) {
   int normalIndex = 0;
   int vertexTextureIndex = 0;
   int textureIndex = 0;
+
+  int maxNormalIndex = -1;
+  int maxTextureIndex = -1;
 
   bool foundEye = false;
   bool onTexture = false;
@@ -168,7 +174,11 @@ void readScene(Scene* scene, char* filename) {
           exit(1);
         }
 
-        scene->ellipsoids[ellipsoidIndex].material = materialIndex - 1;
+        if (onTexture) {
+          scene->ellipsoids[ellipsoidIndex].material = textureIndex - 1;
+        } else {
+          scene->ellipsoids[ellipsoidIndex].material = materialIndex - 1;
+        }
         ellipsoidIndex++;
         break;
 
@@ -302,6 +312,12 @@ void readScene(Scene* scene, char* filename) {
           Indices normals = (Indices){n1 - 1, n2 - 1, n3 - 1};
           face.texture = vertexTextures;
           face.normal = normals;
+          maxTextureIndex = maxTextureIndex < t1 ? t1 : maxTextureIndex;
+          maxTextureIndex = maxTextureIndex < t2 ? t2 : maxTextureIndex;
+          maxTextureIndex = maxTextureIndex < t3 ? t3 : maxTextureIndex;
+          maxNormalIndex = maxNormalIndex < n1 ? n1 : maxNormalIndex;
+          maxNormalIndex = maxNormalIndex < n2 ? n2 : maxNormalIndex;
+          maxNormalIndex = maxNormalIndex < n3 ? n3 : maxNormalIndex;
         }
 
         else if (sscanf(line, "%d//%d %d//%d %d//%d", &v1, &n1, &v2, &n2, &v3,
@@ -394,6 +410,18 @@ void readScene(Scene* scene, char* filename) {
 
   fclose(file);
   // printScene(scene);
+
+  if (maxNormalIndex >= scene->numNormals) {
+    printf("Error: normal index out of bounds\n");
+    freeAll(scene);
+    exit(1);
+  }
+
+  if (maxTextureIndex >= scene->numTextures) {
+    printf("Error: texture index out of bounds\n");
+    freeAll(scene);
+    exit(1);
+  }
 
   if (foundEye == false) {
     printf("Error: eye not found\n");
@@ -523,6 +551,9 @@ void freeAll(Scene* scene) {
   free(scene->vertices);
   free(scene->normals);
   for (int i = 0; i < scene->numTextures; i++) {
+    if (scene->textures[i].pixels == NULL) {
+      continue;
+    }
     for (int j = 0; j < scene->textures[i].height; j++) {
       free(scene->textures[i].pixels[j]);
     }
