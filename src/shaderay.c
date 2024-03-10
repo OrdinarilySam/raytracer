@@ -1,13 +1,53 @@
 #include "shaderay.h"
 
 void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
-  Material material = scene->materials[face->material];
-  Vec3 color = scale(material.diffuseColor, material.ka);
+  Vec3 pointHit = pointAdd(ray->origin, scale(ray->direction, t));
+  Vec3 barycentric = calculateBarycentric(scene, face, &pointHit);
+  Material material;
+  Vec3 color;
+  if (face->type == VERTICES_TEXTURES || face->type == VERTICES_NORMALS_TEXTURES) {
+    material = scene->materials[scene->numMaterials - 1];
+    int matIndex = face->material;
+
+    // printf("matIndex: %d\n", matIndex);
+    int height = scene->textures[matIndex].height - 1;
+    int width = scene->textures[matIndex].width - 1;
+
+    float wIndex1 = (scene->vertexTextures[face->texture.v1].u);
+    float hIndex1 = (scene->vertexTextures[face->texture.v1].v);
+
+    float wIndex2 = (scene->vertexTextures[face->texture.v2].u);
+    float hIndex2 = (scene->vertexTextures[face->texture.v2].v);
+
+    float wIndex3 = (scene->vertexTextures[face->texture.v3].u);
+    float hIndex3 = (scene->vertexTextures[face->texture.v3].v);
+
+    float avgW = barycentric.x * wIndex1 + barycentric.y * wIndex2 + barycentric.z * wIndex3;
+    float avgH = barycentric.x * hIndex1 + barycentric.y * hIndex2 + barycentric.z * hIndex3;
+
+    int x = (int)(avgW * width);
+    int y = (int)(avgH * height);
+
+    material.diffuseColor = scene->textures[matIndex].pixels[y][x];
+
+  } else {
+    Material material = scene->materials[face->material];
+  }
+  
+  color = scale(material.diffuseColor, material.ka);
   
   Vec3 viewDir = scale(ray->direction, -1);
-  Vec3 pointHit = pointAdd(ray->origin, scale(ray->direction, t));
-  Vec3 normal = cross(pointSub(scene->vertices[face->vertices.v2], scene->vertices[face->vertices.v1]),
-                      pointSub(scene->vertices[face->vertices.v3], scene->vertices[face->vertices.v1]));
+  Vec3 normal;
+  if (face->type == VERTICES_NORMALS || face->type == VERTICES_NORMALS_TEXTURES) {
+    normal = pointAdd(scale(scene->normals[face->normal.n1], barycentric.x),
+                      pointAdd(scale(scene->normals[face->normal.n2], barycentric.y),
+                               scale(scene->normals[face->normal.n3], barycentric.z)));
+  } else {
+    Indices vertices = face->vertices;
+    Vec3 e1 = pointSub(scene->vertices[vertices.v2], scene->vertices[vertices.v1]);
+    Vec3 e2 = pointSub(scene->vertices[vertices.v3], scene->vertices[vertices.v1]);
+    normal = cross(e1, e2);
+  }
 
   normalize(&normal);
   normalize(&viewDir);
@@ -23,6 +63,53 @@ void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
     }
 
     normalize(&lightDir);
+
+    float attenuation = 1;
+    float shadow = 1;
+    float shadowCount = 0;
+
+    srand(time(NULL));
+
+    {
+      Ray shadowRay = {pointHit, lightDir};
+      Vec3 sampleLight;
+      Vec3 orthogonal = generateOrthogonal(&lightDir);
+      normalize(&orthogonal);
+
+      Vec3 toLight = pointSub(light.position, pointHit);
+      float distToLight = length(&toLight);
+
+      if (light.type) {
+        attenuation = getAttenuation(&light, distToLight);
+      }
+
+      if (scene->softShadows) {
+        int numSteps = 100;
+        float maxScalingFactor = 0.2;
+        for (int i = 0; i < numSteps; i++) {
+          jitterShadowRay(&shadowRay, &orthogonal, &lightDir, &pointHit,
+                          maxScalingFactor);
+          float distToObject = shadowCheck(scene, &shadowRay, NULL, face);
+
+          if (light.type && distToObject < distToLight) {
+            shadowCount++;
+          } else if (!light.type && distToObject != INFINITY) {
+            shadowCount++;
+          }
+        }
+        shadow = 1 - (shadowCount / numSteps);
+      } else {
+        if (light.type &&
+            shadowCheck(scene, &shadowRay, NULL, face) < distToLight) {
+              printf("found shadow\n");
+          shadow = 0;
+        } else if (!light.type &&
+                   shadowCheck(scene, &shadowRay, NULL, face) != INFINITY) {
+              printf("found shadow\n");
+          shadow = 0;
+        }
+      }
+    }
 
     float NdotL = dot(&normal, &lightDir);
     if (NdotL < 0) {
@@ -40,7 +127,9 @@ void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
     Vec3 diffuse = scale(material.diffuseColor, material.kd * NdotL);
     Vec3 specular =
         scale(material.specularColor, material.ks * pow(NdotH, material.n));
-    color = pointAdd(color, scale(pointAdd(diffuse, specular), light.intensity));
+
+    float factors = light.intensity * attenuation * shadow;
+    color = pointAdd(color, scale(pointAdd(diffuse, specular), factors));
     if (color.r > 1) {
       color.r = 1;
     }
@@ -58,14 +147,31 @@ void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
 
 }
 
-// todo: modify to utilize two separate functions
-void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
-  Material material = scene->materials[ellipsoid->material];
-  Vec3 color = scale(material.diffuseColor, material.ka);
-
-  Vec3 viewDir = scale(ray->direction, -1);
+void shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
+  Material material;
+  Vec3 color;
   Vec3 pointHit = pointAdd(ray->origin, scale(ray->direction, t));
+  Vec3 viewDir = scale(ray->direction, -1);
   Vec3 normal = ellipsoidNormal(ellipsoid, pointHit);
+
+  if (ellipsoid->usingTexture) {
+    material = scene->materials[scene->numMaterials - 1];
+    Texel texel = getSphereTexel(&normal);
+    Texture texture = scene->textures[ellipsoid->material];
+    int height = texture.height - 1;
+    int width = texture.width - 1;
+
+    int x = (int)(texel.u * width);
+    int y = (int)(texel.v * height);
+
+    material.diffuseColor = texture.pixels[y][x];
+
+  } else {
+    material = scene->materials[ellipsoid->material];
+  }
+
+  color = scale(material.diffuseColor, material.ka);
+
 
   normalize(&viewDir);
 
@@ -105,7 +211,7 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
         for (int i = 0; i < numSteps; i++) {
           jitterShadowRay(&shadowRay, &orthogonal, &lightDir, &pointHit,
                           maxScalingFactor);
-          float distToObject = shadowCheck(scene, &shadowRay, ellipsoid);
+          float distToObject = shadowCheck(scene, &shadowRay, ellipsoid, NULL);
 
           if (light.type && distToObject < distToLight) {
             shadowCount++;
@@ -116,10 +222,10 @@ void shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
         shadow = 1 - (shadowCount / numSteps);
       } else {
         if (light.type &&
-            shadowCheck(scene, &shadowRay, ellipsoid) < distToLight) {
+            shadowCheck(scene, &shadowRay, ellipsoid, NULL) < distToLight) {
           shadow = 0;
         } else if (!light.type &&
-                   shadowCheck(scene, &shadowRay, ellipsoid) != INFINITY) {
+                   shadowCheck(scene, &shadowRay, ellipsoid, NULL) != INFINITY) {
           shadow = 0;
         }
       }
@@ -174,7 +280,7 @@ Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point) {
   return normal;
 }
 
-float shadowCheck(Scene *scene, Ray *shadowRay, Ellipsoid *ellipsoid) {
+float shadowCheck(Scene *scene, Ray *shadowRay, Ellipsoid *ellipsoid, Triangle *face) {
   float minimumDistance = INFINITY;
 
   for (int i = 0; i < scene->numEllipsoids; i++) {
@@ -189,6 +295,20 @@ float shadowCheck(Scene *scene, Ray *shadowRay, Ellipsoid *ellipsoid) {
     }
   }
 
+  for (int i = 0; i < scene->numFaces; i++) {
+    Triangle *currentFace = &scene->faces[i];
+    if (currentFace == face) {
+      continue;
+    }
+
+    float t = rayTriangleIntersection(scene, shadowRay, currentFace);
+    if (t > 0 && t < minimumDistance) {
+      minimumDistance = t;
+    }
+  }
+
+  if(minimumDistance < INFINITY)
+    printf("minDist: %f\n", minimumDistance);
   return minimumDistance;
 }
 
@@ -262,4 +382,34 @@ void jitterShadowRay(Ray *shadowRay, Vec3 *orthogonal, Vec3 *lightDir,
   float scalingFactor = (float)rand() / (float)(RAND_MAX)*maxScalingFactor;
   rotated = scale(rotated, scalingFactor);
   shadowRay->origin = pointAdd(*pointHit, rotated);
+}
+
+Vec3 calculateBarycentric(Scene *scene, Triangle *face, Vec3 *pointHit) {
+  Vec3 v0 = pointSub(scene->vertices[face->vertices.v2], scene->vertices[face->vertices.v1]);
+  Vec3 v1 = pointSub(scene->vertices[face->vertices.v3], scene->vertices[face->vertices.v1]);
+  Vec3 v2 = pointSub(*pointHit, scene->vertices[face->vertices.v1]);
+
+  float d00 = dot(&v0, &v0);
+  float d01 = dot(&v0, &v1);
+  float d11 = dot(&v1, &v1);
+  float d20 = dot(&v2, &v0);
+  float d21 = dot(&v2, &v1);
+
+  float denom = d00 * d11 - d01 * d01;
+  float beta = (d11 * d20 - d01 * d21) / denom;
+  float gamma = (d00 * d21 - d01 * d20) / denom;
+  float alpha = 1 - beta - gamma;
+
+  return (Vec3){alpha, beta, gamma};
+}
+
+Texel getSphereTexel(Vec3 *normal) {
+  float phi = acosf(normal->z);
+  float theta = atan2f(normal->y, normal->x);
+  float v = phi / M_PI;
+  if (theta < 0) {
+    theta += 2 * M_PI;
+  }
+  float u = theta / (2 * M_PI);
+  return (Texel){u, v};
 }

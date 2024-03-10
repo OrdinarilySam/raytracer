@@ -105,7 +105,7 @@ void traceRay(Scene* scene, Ray* ray) {
 
   // todo: shaderay or shadetriangle
   if (isSphere) {
-    shadeRay(scene, ray, closestEllipsoid, minimumDistance);
+    shadeSphere(scene, ray, closestEllipsoid, minimumDistance);
   } else {
     shadeTriangle(scene, ray, closestFace, minimumDistance);   
   }
@@ -149,7 +149,7 @@ float raySphereIntersection(Ray* ray, Ellipsoid* ellipsoid) {
 }
 
 float rayTriangleIntersection(Scene* scene, Ray* ray, Triangle* face) {
-  Vec3 vertices = face->vertices;
+  Indices vertices = face->vertices;
   Vec3 e1 = pointSub(scene->vertices[vertices.v2], scene->vertices[vertices.v1]);
   Vec3 e2 = pointSub(scene->vertices[vertices.v3], scene->vertices[vertices.v1]);
   Vec3 n = cross(e1, e2);

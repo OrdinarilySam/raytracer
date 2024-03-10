@@ -56,7 +56,7 @@ $(OUT_DIR):
 # Test target
 test: $(OUT_DIR)/raytracer1c
 	@for number in $$(seq 1 $(NUM_INPUTS)); do \
-		./$(OUT_DIR)/raytracer1b $(DATA_DIR)/$(FILE_NAME)$$number.$(FILE_EXT); \
+		./$(OUT_DIR)/raytracer1c $(DATA_DIR)/$(FILE_NAME)$$number.$(FILE_EXT); \
 	done
 
 # Clean target

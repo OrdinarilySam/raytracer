@@ -8,6 +8,8 @@
 #include "typedefs.h"
 #include "vec3.h"
 
+#define MAXCHAR 512
+
 typedef enum {
   IMSIZE,
   EYE,
@@ -25,6 +27,9 @@ typedef enum {
   SOFT_SHADOWS,
   VERTEX,
   FACE,
+  VERTEX_NORMAL,
+  VERTEX_TEXTURE,
+  TEXTURE,
   UNKNOWN
 } Keyword;
 
@@ -35,5 +40,9 @@ void validateScene(Scene* scene);
 void freeAll(Scene* scene);
 FILE* createOutputFile(char* filename, int imgWidth, int imgHeight);
 void printScene(Scene* scene);
+
+void parsePPM(Texture* texture, char* filename);
+
+
 
 #endif  // READSCENE_H

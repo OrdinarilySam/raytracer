@@ -10,10 +10,50 @@ typedef struct {
   Vec3 center;
   Vec3 radii;
   int material;
+  bool usingTexture;
 } Ellipsoid;
 
 typedef struct {
-  Vec3 vertices;
+  union {
+    struct {
+      int v1, v2, v3;
+    };
+    struct {
+      int n1, n2, n3;
+    };
+    struct {
+      int t1, t2, t3;
+    };
+    struct {
+      int x1, x2, x3;
+    };
+    
+  };
+} Indices;
+
+/*
+Types:
+0 - vertices only
+1 - vertices and normals
+2 - vertices and textures
+3 - vertices, normals, and textures
+*/
+typedef enum {
+  VERTICES_ONLY,
+  VERTICES_NORMALS,
+  VERTICES_TEXTURES,
+  VERTICES_NORMALS_TEXTURES
+} TriangleType;
+
+typedef struct {
+  float u, v;
+} Texel;
+
+typedef struct {
+  Indices vertices;
+  Indices normal;
+  Indices texture;
+  TriangleType type;
   int material;
 } Triangle;
 
@@ -44,6 +84,11 @@ typedef struct {
 } Ray;
 
 typedef struct {
+  int height, width;
+  Vec3** pixels;
+} Texture;
+
+typedef struct {
   Vec3 color;
   float minA, maxA;
   float minDist, maxDist;
@@ -61,13 +106,16 @@ typedef struct {
   Light* lights;
   Triangle* faces;
   Vec3* vertices;
+  Vec3* normals;
+  Texel* vertexTextures;
+  Texture* textures;
   FILE* output;
   DepthCue depthcue;
   union {
     float hfov;
     float frustum;
   };
-  int numEllipsoids, numMaterials, numLights, numFaces, numVertices;
+  int numEllipsoids, numMaterials, numLights, numFaces, numVertices, numNormals, numTextures, numVertexTextures;
   bool parallel;
   bool softShadows;
 } Scene;
