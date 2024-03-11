@@ -35,7 +35,7 @@ void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
     material.diffuseColor = pointAdd(color1, pointAdd(color2, pointAdd(color3, color4)));
 
   } else {
-    Material material = scene->materials[face->material];
+    material = scene->materials[face->material];
   }
   
   color = scale(material.diffuseColor, material.ka);
