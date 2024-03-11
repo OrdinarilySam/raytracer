@@ -16,7 +16,6 @@ endif
 
 # Compiler
 CXX = clang
-CXXFLAGS =
 
 # Directories
 SRC_DIR = src
@@ -25,9 +24,12 @@ OBJ_DIR = obj
 OUT_DIR = out
 DATA_DIR = data
 
+DBG_OBJ_DIR = $(OBJ_DIR)/debug
+
 # Find all .c files in SRC_DIR to compile them into .o files in OBJ_DIR
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+DBGOBJS = $(SRCS:$(SRC_DIR)/%.c=$(DBG_OBJ_DIR)/%.o)
 
 # Default goal
 .DEFAULT_GOAL := all
@@ -35,15 +37,15 @@ OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 # Targets
 all: $(OUT_DIR)/raytracer1c
 
-.PHONY: all clean test run
+.PHONY: all clean test run debug
 
 # Linking the executable
 $(OUT_DIR)/raytracer1c: $(OBJS)
-	$(CXX) $(CXXFLAGS) -lm -o $@ $^
+	$(CXX) -lm -o $@ $^
 
 # Compiling source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -I $(INC_DIR) -c $< -o $@
+	$(CXX) -I $(INC_DIR) -c $< -o $@
 
 # Create the object files directory
 $(OBJ_DIR):
@@ -61,9 +63,20 @@ test: $(OUT_DIR)/raytracer1c
 
 # Clean target
 clean:
-	rm -rf $(OBJ_DIR) $(OUT_DIR)/raytracer1* $(DATA_DIR)/*.ppm $(DATA_DIR)/*.jpeg
+	rm -rf $(OBJ_DIR) $(OUT_DIR)/raytracer1* $(DATA_DIR)/*.ppm 
 
 # Run program with a user-specified input file
 # Usage: make run INPUT=filename.txt
 run: $(OUT_DIR)/raytracer1c
 	@./$(OUT_DIR)/raytracer1c $(DATA_DIR)/$(INPUT)
+
+# Debug target
+debug: $(DBGOBJS)
+	$(CXX) -g -lm -o $(OUT_DIR)/raytracer1c_debug $^
+
+$(DBG_OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(DBG_OBJ_DIR)
+	$(CXX) -g -I $(INC_DIR) -c $< -o $@
+
+# Create the object files directory for debug
+$(DBG_OBJ_DIR): $(OBJ_DIR)
+	mkdir -p $@
