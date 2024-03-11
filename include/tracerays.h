@@ -12,4 +12,6 @@
 void traceRays(Scene *scene);
 void traceRay(Scene *scene, Ray *ray);
 
+void printProgressBar(int current, int total);
+
 #endif  // TRACERAYS_H

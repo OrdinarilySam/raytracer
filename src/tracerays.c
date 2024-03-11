@@ -48,6 +48,7 @@ void traceRays(Scene* scene) {
   }
 
   for (int i = 0; i < scene->imgsize.height; i++) {
+    printProgressBar(i, scene->imgsize.height);
     for (int j = 0; j < scene->imgsize.width; j++) {
       Vec3 pointThrough =
           pointAdd(pointAdd(ul, scale(vChange, i)), scale(hChange, j));
@@ -65,6 +66,8 @@ void traceRays(Scene* scene) {
       traceRay(scene, &curRay);
     }
   }
+  printProgressBar(scene->imgsize.height, scene->imgsize.height);
+  printf("\n");
 }
 
 void traceRay(Scene* scene, Ray* ray) {
@@ -188,4 +191,18 @@ float rayTriangleIntersection(Scene* scene, Ray* ray, Triangle* face) {
 
   return t;
   
+}
+
+void printProgressBar(int current, int total) {
+    const int barWidth = 50;  
+    float progress = (float)current / total;
+    printf("\r["); 
+    int pos = barWidth * progress;
+    for (int i = 0; i < barWidth; ++i) {
+        if (i < pos) printf("=");
+        else if (i == pos) printf(">");
+        else printf(" ");
+    }
+    printf("] %d%%", (int)(progress * 100));
+    fflush(stdout);  // Ensures the output is printed immediately
 }
