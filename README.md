@@ -1,0 +1,25 @@
+# Raytracer 1c
+Author: Sam Martin (MART6353)
+ID: 5835125
+
+## Compilation
+Just run make to compile the program. The executable will be in the ./out directory
+
+## Running
+- Use `./out/raytracer1c {input file}`
+  - or whatever the path is to the out directory
+- Use `make run INPUT={inputfile}`
+  - this will run from the path data, so if using this command, your input file must be in the data directory or you must specify the relative path to the data directory
+- Use `make test`
+  - This will run a handful of files at the same time from the data directory. The name and amount of files can be specified from the config/config.default.mk file
+  - They must be in the `{filename}{1 indexed number}.{file ext}` format
+  - This is the only command you will need to modify the config file for
+  - It is currently set up to run the seven example files given which are currently in the data directory with all the necessary texture files.
+
+### Textures
+Textures must be in a texture directory where the input files are located. 
+
+If your input files are in `./data`, the texture files must live in `./data/texture`. This is currently not able to be changed.
+
+## Showcase image
+The showcase image is labelled `skull.jpeg`. You are free to run this yourself with `make run INPUT=skull.txt`, but be warned it takes around 10 minutes as it includes quite a lot of triangles.
