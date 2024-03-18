@@ -467,12 +467,12 @@ void readScene(Scene* scene, char* filename) {
     exit(1);
   }
   validateScene(scene);
-  FILE* fp =
-      createOutputFile(filename, scene->imgsize.width, scene->imgsize.height);
-  if (fp == NULL) {
-    freeAll(scene);
-    exit(1);
-  }
+  // FILE* fp =
+      // createOutputFile(filename, scene->imgsize.width, scene->imgsize.height);
+  // if (fp == NULL) {
+    // freeAll(scene);
+    // exit(1);
+  // }
 
   initializePixels(scene);
   // scene->output = fp;

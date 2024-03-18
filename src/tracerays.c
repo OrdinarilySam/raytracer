@@ -1,5 +1,43 @@
 #include "tracerays.h"
 
+atomic_int rowsRendered = 0;
+int spinnerIndex = 0;
+
+void* traceRaysThread(void* arg) {
+  ThreadArgs* data = (ThreadArgs*)arg;
+  Scene* scene = data->scene;
+  int start = data->start;
+  int endRow = data->end;
+  Vec3 ul = data->threadData->ul;
+  Vec3 vChange = data->threadData->vChange;
+  Vec3 hChange = data->threadData->hChange;
+  Vec3 w = data->threadData->w;
+
+  for (int i = start; i < endRow; i++) {
+    for (int j = 0; j < scene->imgsize.width; j++) {
+      Vec3 pointThrough =
+          pointAdd(pointAdd(ul, scale(vChange, i)), scale(hChange, j));
+      Ray curRay;
+      curRay.location = (Indices){i, j, 0};
+
+      if (!scene->parallel) {
+        curRay.origin = scene->eye;
+        curRay.direction = pointSub(pointThrough, scene->eye);
+        normalize(&curRay.direction);
+      } else {
+        curRay.origin = pointThrough;
+        curRay.direction = w;
+      }
+
+      Vec3 color = traceRay(scene, &curRay);
+      scene->pixels[i][j] = color;
+    }
+    atomic_fetch_add(&rowsRendered, 1);
+  }
+
+  return NULL;
+}
+
 void traceRays(Scene* scene) {
   Vec3 w = scene->viewdir;
   normalize(&w);
@@ -47,27 +85,69 @@ void traceRays(Scene* scene) {
     vChange = scale(pointSub(ll, ul), 1.0 / (scene->imgsize.height - 1));
   }
 
-  for (int i = 0; i < scene->imgsize.height; i++) {
-    printProgressBar(i, scene->imgsize.height);
-    for (int j = 0; j < scene->imgsize.width; j++) {
-      Vec3 pointThrough =
-          pointAdd(pointAdd(ul, scale(vChange, i)), scale(hChange, j));
-      Ray curRay;
-      curRay.location = (Indices){i, j, 0};
+  int numThreads = sysconf(_SC_NPROCESSORS_ONLN);
 
-      if (!scene->parallel) {
-        curRay.origin = scene->eye;
-        curRay.direction = pointSub(pointThrough, scene->eye);
-        normalize(&curRay.direction);
-      } else {
-        curRay.origin = pointThrough;
-        curRay.direction = w;
+  if (THREADS_ON && numThreads < scene->imgsize.height) {
+    ThreadData* threadData = (ThreadData*)malloc(sizeof(ThreadData));
+    if (threadData == NULL) {
+      printf("Error: malloc failed\n");
+      exit(1);
+    }
+
+    threadData->ul = ul;
+    threadData->vChange = vChange;
+    threadData->hChange = hChange;
+    threadData->w = w;
+
+    pthread_t threads[numThreads];
+    ThreadArgs args[numThreads];
+    int rowsPerThread = scene->imgsize.height / numThreads;
+
+    printf("Rendering scene with %d threads\n", numThreads);
+
+    for (int i = 0; i < numThreads; i++) {
+      args[i].scene = scene;
+      args[i].threadData = threadData;
+      args[i].start = i * rowsPerThread;
+      args[i].end = (i + 1) * rowsPerThread;
+      if (i == numThreads - 1) {
+        args[i].end = scene->imgsize.height;
       }
+      pthread_create(&threads[i], NULL, traceRaysThread, &args[i]);
+    }
+    while (atomic_load(&rowsRendered) < scene->imgsize.height) {
+      printProgressBar(atomic_load(&rowsRendered), scene->imgsize.height);
+      usleep(100000);
+    }
+    for (int i = 0; i < numThreads; i++) {
+      pthread_join(threads[i], NULL);
+    }
+    free(threadData);
 
-      Vec3 color = traceRay(scene, &curRay);
-      scene->pixels[i][j] = color;
+  } else {
+    for (int i = 0; i < scene->imgsize.height; i++) {
+      printProgressBar(i, scene->imgsize.height);
+      for (int j = 0; j < scene->imgsize.width; j++) {
+        Vec3 pointThrough =
+            pointAdd(pointAdd(ul, scale(vChange, i)), scale(hChange, j));
+        Ray curRay;
+        curRay.location = (Indices){i, j, 0};
+
+        if (!scene->parallel) {
+          curRay.origin = scene->eye;
+          curRay.direction = pointSub(pointThrough, scene->eye);
+          normalize(&curRay.direction);
+        } else {
+          curRay.origin = pointThrough;
+          curRay.direction = w;
+        }
+
+        Vec3 color = traceRay(scene, &curRay);
+        scene->pixels[i][j] = color;
+      }
     }
   }
+
   printProgressBar(scene->imgsize.height, scene->imgsize.height);
   printf("\n");
 }
@@ -105,7 +185,7 @@ Vec3 traceRay(Scene* scene, Ray* ray) {
   if (!hit) {
     // scene->pixels[ray->location.i][ray->location.j] = scene->bkgcolor;
     // fprintf(scene->output, "%d %d %d\n", (int)(scene->bkgcolor.r * 255),
-            // (int)(scene->bkgcolor.g * 255), (int)(scene->bkgcolor.b * 255));
+    // (int)(scene->bkgcolor.g * 255), (int)(scene->bkgcolor.b * 255));
     return scene->bkgcolor;
   }
 
@@ -114,7 +194,7 @@ Vec3 traceRay(Scene* scene, Ray* ray) {
   if (isSphere) {
     color = shadeSphere(scene, ray, closestEllipsoid, minimumDistance);
   } else {
-    color = shadeTriangle(scene, ray, closestFace, minimumDistance);   
+    color = shadeTriangle(scene, ray, closestFace, minimumDistance);
   }
   // scene->pixels[ray->location.i][ray->location.j] = color;
   return color;
@@ -159,8 +239,10 @@ float raySphereIntersection(Ray* ray, Ellipsoid* ellipsoid) {
 
 float rayTriangleIntersection(Scene* scene, Ray* ray, Triangle* face) {
   Indices vertices = face->vertices;
-  Vec3 e1 = pointSub(scene->vertices[vertices.v2], scene->vertices[vertices.v1]);
-  Vec3 e2 = pointSub(scene->vertices[vertices.v3], scene->vertices[vertices.v1]);
+  Vec3 e1 =
+      pointSub(scene->vertices[vertices.v2], scene->vertices[vertices.v1]);
+  Vec3 e2 =
+      pointSub(scene->vertices[vertices.v3], scene->vertices[vertices.v1]);
   Vec3 n = cross(e1, e2);
   float D = -dot(&n, &scene->vertices[vertices.v1]);
   if (dot(&n, &ray->direction) == 0) {
@@ -182,33 +264,39 @@ float rayTriangleIntersection(Scene* scene, Ray* ray, Triangle* face) {
     return -1;
   }
 
-  Vec3 ep = pointSub(pointAdd(ray->origin, scale(ray->direction, t)), scene->vertices[vertices.v1]);
+  Vec3 ep = pointSub(pointAdd(ray->origin, scale(ray->direction, t)),
+                     scene->vertices[vertices.v1]);
   float d1p = dot(&ep, &e1);
   float d2p = dot(&ep, &e2);
 
   float beta = (d22 * d1p - d12 * d2p) / determinant;
   float gamma = (d11 * d2p - d12 * d1p) / determinant;
 
-  if (beta < 0 || gamma < 0 ||
-      beta > 1 || gamma > 1 ||
-      beta + gamma > 1) {
+  if (beta < 0 || gamma < 0 || beta > 1 || gamma > 1 || beta + gamma > 1) {
     return -1;
   }
 
   return t;
-  
 }
 
 void printProgressBar(int current, int total) {
-    const int barWidth = 50;  
-    float progress = (float)current / total;
-    printf("\r["); 
-    int pos = barWidth * progress;
-    for (int i = 0; i < barWidth; ++i) {
-        if (i < pos) printf("=");
-        else if (i == pos) printf(">");
-        else printf(" ");
-    }
-    printf("] %d%%", (int)(progress * 100));
-    fflush(stdout);  // Ensures the output is printed immediately
+  const int barWidth = 50;
+  float progress = (float)current / total;
+  printf("\r[");
+  int pos = barWidth * progress;
+  for (int i = 0; i < barWidth; ++i) {
+    if (i < pos)
+      printf("=");
+    else if (i == pos)
+      printf(">");
+    else
+      printf(" ");
+  }
+  printf("] ");
+  if (progress < 1) {
+    printf("%c ", "|/-\\"[spinnerIndex++ % 4]);
+  }
+  printf("%d%%", (int)(progress * 100));
+
+  fflush(stdout);  // Ensures the output is printed immediately
 }

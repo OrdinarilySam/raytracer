@@ -12,4 +12,6 @@
 #include "typedefs.h"
 #include "vec3.h"
 
+void printImage(Scene* scene, char* filename);
+
 #endif  // MAIN_H
