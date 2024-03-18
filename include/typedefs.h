@@ -27,7 +27,9 @@ typedef struct {
     struct {
       int x1, x2, x3;
     };
-    
+    struct {
+      int i, j, k;
+    };
   };
 } Indices;
 
@@ -81,6 +83,7 @@ typedef struct {
 typedef struct {
   Vec3 origin;
   Vec3 direction;
+  Indices location;
 } Ray;
 
 typedef struct {
@@ -109,7 +112,8 @@ typedef struct {
   Vec3* normals;
   Texel* vertexTextures;
   Texture* textures;
-  FILE* output;
+  // FILE* output;
+  Vec3** pixels;
   DepthCue depthcue;
   union {
     float hfov;

@@ -53,6 +53,7 @@ void traceRays(Scene* scene) {
       Vec3 pointThrough =
           pointAdd(pointAdd(ul, scale(vChange, i)), scale(hChange, j));
       Ray curRay;
+      curRay.location = (Indices){i, j, 0};
 
       if (!scene->parallel) {
         curRay.origin = scene->eye;
@@ -63,14 +64,15 @@ void traceRays(Scene* scene) {
         curRay.direction = w;
       }
 
-      traceRay(scene, &curRay);
+      Vec3 color = traceRay(scene, &curRay);
+      scene->pixels[i][j] = color;
     }
   }
   printProgressBar(scene->imgsize.height, scene->imgsize.height);
   printf("\n");
 }
 
-void traceRay(Scene* scene, Ray* ray) {
+Vec3 traceRay(Scene* scene, Ray* ray) {
   float minimumDistance = INFINITY;
   Ellipsoid* closestEllipsoid;
   Triangle* closestFace;
@@ -101,17 +103,21 @@ void traceRay(Scene* scene, Ray* ray) {
   }
 
   if (!hit) {
-    fprintf(scene->output, "%d %d %d\n", (int)(scene->bkgcolor.r * 255),
-            (int)(scene->bkgcolor.g * 255), (int)(scene->bkgcolor.b * 255));
-    return;
+    // scene->pixels[ray->location.i][ray->location.j] = scene->bkgcolor;
+    // fprintf(scene->output, "%d %d %d\n", (int)(scene->bkgcolor.r * 255),
+            // (int)(scene->bkgcolor.g * 255), (int)(scene->bkgcolor.b * 255));
+    return scene->bkgcolor;
   }
 
   // todo: shaderay or shadetriangle
+  Vec3 color;
   if (isSphere) {
-    shadeSphere(scene, ray, closestEllipsoid, minimumDistance);
+    color = shadeSphere(scene, ray, closestEllipsoid, minimumDistance);
   } else {
-    shadeTriangle(scene, ray, closestFace, minimumDistance);   
+    color = shadeTriangle(scene, ray, closestFace, minimumDistance);   
   }
+  // scene->pixels[ray->location.i][ray->location.j] = color;
+  return color;
 }
 
 float raySphereIntersection(Ray* ray, Ellipsoid* ellipsoid) {

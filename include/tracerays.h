@@ -10,7 +10,7 @@
 #include "vec3.h"
 
 void traceRays(Scene *scene);
-void traceRay(Scene *scene, Ray *ray);
+Vec3 traceRay(Scene *scene, Ray *ray);
 
 void printProgressBar(int current, int total);
 

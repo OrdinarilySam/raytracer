@@ -12,8 +12,8 @@ float raySphereIntersection(Ray *ray, Ellipsoid *ellipsoid);
 float rayTriangleIntersection(Scene *scene, Ray *ray, Triangle *face);
 Vec3 calculateBarycentric(Scene *scene, Triangle *face, Vec3 *pointHit);
 
-void shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t);
-void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t);
+Vec3 shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t);
+Vec3 shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t);
 
 Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point);
 float shadowCheck(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, Triangle *face);

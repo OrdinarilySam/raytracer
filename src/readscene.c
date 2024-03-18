@@ -473,10 +473,31 @@ void readScene(Scene* scene, char* filename) {
     freeAll(scene);
     exit(1);
   }
-  scene->output = fp;
+
+  initializePixels(scene);
+  // scene->output = fp;
 
   // ? Debugging
   // printScene(scene);
+}
+
+void initializePixels(Scene* scene) {
+  Vec3** pixels = (Vec3**)malloc(scene->imgsize.height * sizeof(Vec3*));
+  if (pixels == NULL) {
+    printf("Error: malloc failed\n");
+    freeAll(scene);
+    exit(1);
+  }
+  for (int i = 0; i < scene->imgsize.height; i++) {
+    pixels[i] = (Vec3*)malloc(scene->imgsize.width * sizeof(Vec3));
+    if (pixels[i] == NULL) {
+      printf("Error: malloc failed\n");
+      freeAll(scene);
+      exit(1);
+    }
+  }
+  scene->pixels = pixels;
+
 }
 
 FILE* createOutputFile(char* filename, int imgWidth, int imgHeight) {
@@ -598,6 +619,13 @@ void freeAll(Scene* scene) {
     free(scene->textures[i].pixels);
   }
   free(scene->textures);
+  if (scene->pixels != NULL) {
+    for (int i = 0; i < scene->imgsize.height; i++) {
+      if (scene->pixels[i] != NULL)
+      free(scene->pixels[i]);
+    }
+    free(scene->pixels);
+  }
   free(scene);
 }
 
@@ -611,6 +639,7 @@ void initializeScene(Scene* scene) {
   scene->bkgcolor = (Vec3){-1, -1, -1};
   scene->parallel = false;
   scene->depthcue.enabled = false;
+  scene->pixels = NULL;
 }
 
 Keyword getKeyword(char* keyword) {

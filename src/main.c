@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 
   traceRays(scene);
 
-  fclose(scene->output);
+  // fclose(scene->output);
   freeAll(scene);
   printf("Done\n\n");
   return 0;

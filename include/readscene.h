@@ -34,14 +34,18 @@ typedef enum {
 } Keyword;
 
 Keyword getKeyword(char* keyword);
+
 void readScene(Scene* scene, char* filename);
-void initializeScene(Scene* scene);
-void validateScene(Scene* scene);
-void freeAll(Scene* scene);
-FILE* createOutputFile(char* filename, int imgWidth, int imgHeight);
 void printScene(Scene* scene);
 
+void initializeScene(Scene* scene);
+void validateScene(Scene* scene);
+
+FILE* createOutputFile(char* filename, int imgWidth, int imgHeight);
 void parsePPM(Texture* texture, char* filename, char* inputPath);
+void initializePixels(Scene* scene);
+
+void freeAll(Scene* scene);
 
 
 

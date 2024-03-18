@@ -1,6 +1,6 @@
 #include "shaderay.h"
 
-void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
+Vec3 shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
   Vec3 pointHit = pointAdd(ray->origin, scale(ray->direction, t));
   Vec3 barycentric = calculateBarycentric(scene, face, &pointHit);
   Material material;
@@ -144,12 +144,14 @@ void shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
 
   }
 
-  fprintf(scene->output, "%d %d %d\n", (int)(color.r * 255),
-          (int)(color.g * 255), (int)(color.b * 255));
+  // fprintf(scene->output, "%d %d %d\n", (int)(color.r * 255),
+          // (int)(color.g * 255), (int)(color.b * 255));
+  scene->pixels[ray->location.i][ray->location.j] = color;
+  return color;
 
 }
 
-void shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
+Vec3 shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
   Material material;
   Vec3 color;
   Vec3 pointHit = pointAdd(ray->origin, scale(ray->direction, t));
@@ -285,8 +287,10 @@ void shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
                      scale(scene->depthcue.color, 1 - depthCueing));
   }
 
-  fprintf(scene->output, "%d %d %d\n", (int)(color.r * 255),
-          (int)(color.g * 255), (int)(color.b * 255));
+  // fprintf(scene->output, "%d %d %d\n", (int)(color.r * 255),
+          // (int)(color.g * 255), (int)(color.b * 255));
+  scene->pixels[ray->location.i][ray->location.j] = color;
+  return color;
 }
 
 Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point) {
