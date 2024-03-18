@@ -146,7 +146,7 @@ Vec3 shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t) {
 
   // fprintf(scene->output, "%d %d %d\n", (int)(color.r * 255),
           // (int)(color.g * 255), (int)(color.b * 255));
-  scene->pixels[ray->location.i][ray->location.j] = color;
+  // scene->pixels[ray->location.i][ray->location.j] = color;
   return color;
 
 }
@@ -289,7 +289,7 @@ Vec3 shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t) {
 
   // fprintf(scene->output, "%d %d %d\n", (int)(color.r * 255),
           // (int)(color.g * 255), (int)(color.b * 255));
-  scene->pixels[ray->location.i][ray->location.j] = color;
+  // scene->pixels[ray->location.i][ray->location.j] = color;
   return color;
 }
 
