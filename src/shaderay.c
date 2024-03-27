@@ -191,10 +191,10 @@ Vec3 shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, Triangle *face,
   float IdotN = dot(&incident, &normal);
   if (IdotN < 0) {
     IdotN = -IdotN;
-    eta = material.eta;
+    eta = material.eta / scene->backgroundEta;
     normal = scale(normal, -1);
   } else {
-    eta = 1 / material.eta;
+    eta = scene->backgroundEta / material.eta;
   }
 
   Vec3 reflection = (Vec3){0, 0, 0};

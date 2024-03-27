@@ -122,6 +122,7 @@ typedef struct {
     float frustum;
   };
   int numEllipsoids, numMaterials, numLights, numFaces, numVertices, numNormals, numTextures, numVertexTextures;
+  float backgroundEta;
   bool parallel;
   bool softShadows;
 } Scene;

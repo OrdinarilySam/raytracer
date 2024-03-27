@@ -112,8 +112,8 @@ void readScene(Scene* scene, char* filename) {
         break;
 
       case BKG_COLOR:
-        fscanf(file, "%f %f %f", &scene->bkgcolor.x, &scene->bkgcolor.y,
-               &scene->bkgcolor.z);
+        fscanf(file, "%f %f %f %f", &scene->bkgcolor.x, &scene->bkgcolor.y,
+               &scene->bkgcolor.z, &scene->backgroundEta);
         break;
 
       case PARALLEL:
@@ -582,6 +582,11 @@ void validateScene(Scene* scene) {
   if (scene->bkgcolor.x < 0 || scene->bkgcolor.x > 1 || scene->bkgcolor.y < 0 ||
       scene->bkgcolor.y > 1 || scene->bkgcolor.z < 0 || scene->bkgcolor.z > 1) {
     printf("Error: bkgcolor components must be between 0 and 1\n");
+    freeAll(scene);
+    exit(1);
+  }
+  if (scene->backgroundEta < 1) {
+    printf("Error: backgroundEta must be greater than or equal to 1\n");
     freeAll(scene);
     exit(1);
   }
