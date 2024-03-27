@@ -10,6 +10,7 @@ typedef struct {
   Vec3 center;
   Vec3 radii;
   int material;
+  int texture;
   bool usingTexture;
 } Ellipsoid;
 
@@ -57,12 +58,13 @@ typedef struct {
   Indices textures;
   TriangleType type;
   int material;
+  int texture;
 } Triangle;
 
 typedef struct {
   Vec3 diffuseColor;
   Vec3 specularColor;
-  float ka, kd, ks, n;
+  float ka, kd, ks, n, alpha, eta;
 } Material;
 
 typedef struct {
@@ -83,7 +85,7 @@ typedef struct {
 typedef struct {
   Vec3 origin;
   Vec3 direction;
-  Indices location;
+  int depth;
 } Ray;
 
 typedef struct {

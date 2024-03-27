@@ -2,4 +2,4 @@
 # example1.txt, example2.txt, ... etc
 FILE_NAME = example
 FILE_EXT = txt
-NUM_INPUTS = 7
+NUM_INPUTS = 3

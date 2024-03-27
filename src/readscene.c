@@ -143,12 +143,12 @@ void readScene(Scene* scene, char* filename) {
 
         scene->ellipsoids[ellipsoidIndex].radii = (Vec3){r, r, r};
         if (onTexture) {
-          scene->ellipsoids[ellipsoidIndex].material = textureIndex - 1;
+          scene->ellipsoids[ellipsoidIndex].texture = textureIndex - 1;
           scene->ellipsoids[ellipsoidIndex].usingTexture = true;
         } else {
-          scene->ellipsoids[ellipsoidIndex].material = materialIndex - 1;
           scene->ellipsoids[ellipsoidIndex].usingTexture = false;
         }
+        scene->ellipsoids[ellipsoidIndex].material = materialIndex - 1;
         ellipsoidIndex++;
         break;
 
@@ -178,15 +178,16 @@ void readScene(Scene* scene, char* filename) {
         }
 
         if (onTexture) {
-          scene->ellipsoids[ellipsoidIndex].material = textureIndex - 1;
+          scene->ellipsoids[ellipsoidIndex].texture = textureIndex - 1;
+          scene->ellipsoids[ellipsoidIndex].usingTexture = true;
         } else {
-          scene->ellipsoids[ellipsoidIndex].material = materialIndex - 1;
+          scene->ellipsoids[ellipsoidIndex].usingTexture = false;
         }
+        scene->ellipsoids[ellipsoidIndex].material = materialIndex - 1;
         ellipsoidIndex++;
         break;
 
       case MTL_COLOR: {
-        onTexture = false;
         fscanf(file, "%f %f %f",
                &scene->materials[materialIndex].diffuseColor.x,
                &scene->materials[materialIndex].diffuseColor.y,
@@ -199,6 +200,8 @@ void readScene(Scene* scene, char* filename) {
                &scene->materials[materialIndex].kd,
                &scene->materials[materialIndex].ks,
                &scene->materials[materialIndex].n);
+        fscanf(file, "%f %f", &scene->materials[materialIndex].alpha,
+               &scene->materials[materialIndex].eta);
 
         if (scene->materials[materialIndex].ka < 0 ||
             scene->materials[materialIndex].ka > 1 ||
@@ -213,6 +216,20 @@ void readScene(Scene* scene, char* filename) {
         }
         if (scene->materials[materialIndex].n < 0) {
           printf("Error: n must be greater than 0\n");
+          freeAll(scene);
+          fclose(file);
+          exit(1);
+        }
+        if (scene->materials[materialIndex].eta < 1) {
+          printf("Error: eta must be greater than or equal to 1\n");
+          freeAll(scene);
+          fclose(file);
+          exit(1);
+        }
+
+        if (scene->materials[materialIndex].alpha < 0 ||
+            scene->materials[materialIndex].alpha > 1) {
+          printf("Error: alpha must be between 0 and 1\n");
           freeAll(scene);
           fclose(file);
           exit(1);
@@ -356,10 +373,9 @@ void readScene(Scene* scene, char* filename) {
         }
 
         if (onTexture) {
-          face.material = textureIndex - 1;
-        } else {
-          face.material = materialIndex - 1;
-        }
+          face.texture = textureIndex - 1;
+        } 
+        face.material = materialIndex - 1;
 
         face.vertices = (Indices){v1 - 1, v2 - 1, v3 - 1};
         face.normals = (Indices){n1 - 1, n2 - 1, n3 - 1};
@@ -518,9 +534,6 @@ FILE* createOutputFile(char* filename, int imgWidth, int imgHeight) {
     printf("Couldn't create file %s\n", newFileName);
     return NULL;
   }
-
-  fprintf(outputFile, "P3 %d %d %d\n", imgWidth, imgHeight, 255);
-
   return outputFile;
 }
 

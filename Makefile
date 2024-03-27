@@ -44,7 +44,7 @@ $(OUT_DIR)/raytracer1c: $(OBJS)
 	$(CXX) -lm -o $@ $^
 
 # Compiling source files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR) $(INC_DIR)/%.h
 	$(CXX) -I $(INC_DIR) -c $< -o $@
 
 # Create the object files directory

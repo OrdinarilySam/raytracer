@@ -18,7 +18,7 @@ void* traceRaysThread(void* arg) {
       Vec3 pointThrough =
           pointAdd(pointAdd(ul, scale(vChange, i)), scale(hChange, j));
       Ray curRay;
-      curRay.location = (Indices){i, j, 0};
+      curRay.depth = 1;
 
       if (!scene->parallel) {
         curRay.origin = scene->eye;
@@ -131,7 +131,7 @@ void traceRays(Scene* scene) {
         Vec3 pointThrough =
             pointAdd(pointAdd(ul, scale(vChange, i)), scale(hChange, j));
         Ray curRay;
-        curRay.location = (Indices){i, j, 0};
+        curRay.depth = 1;
 
         if (!scene->parallel) {
           curRay.origin = scene->eye;
@@ -163,7 +163,7 @@ Vec3 traceRay(Scene* scene, Ray* ray) {
     Ellipsoid* ellipsoid = &scene->ellipsoids[i];
     float t = raySphereIntersection(ray, ellipsoid);
 
-    if (t > 0 && t < minimumDistance) {
+    if (t > 0 && t < minimumDistance && t > EPSILON) {
       minimumDistance = t;
       closestEllipsoid = ellipsoid;
       hit = true;
@@ -174,7 +174,7 @@ Vec3 traceRay(Scene* scene, Ray* ray) {
     Triangle* face = &scene->faces[i];
     float t = rayTriangleIntersection(scene, ray, face);
 
-    if (t > 0 && t < minimumDistance) {
+    if (t > 0 && t < minimumDistance && t > EPSILON) {
       isSphere = false;
       minimumDistance = t;
       closestFace = face;
@@ -183,19 +183,23 @@ Vec3 traceRay(Scene* scene, Ray* ray) {
   }
 
   if (!hit) {
-    // scene->pixels[ray->location.i][ray->location.j] = scene->bkgcolor;
-    // fprintf(scene->output, "%d %d %d\n", (int)(scene->bkgcolor.r * 255),
-    // (int)(scene->bkgcolor.g * 255), (int)(scene->bkgcolor.b * 255));
     return scene->bkgcolor;
   }
 
-  // todo: shaderay or shadetriangle
-  Vec3 color;
   if (isSphere) {
-    color = shadeSphere(scene, ray, closestEllipsoid, minimumDistance);
+    closestFace = NULL;
   } else {
-    color = shadeTriangle(scene, ray, closestFace, minimumDistance);
+    closestEllipsoid = NULL;
   }
+
+  Vec3 color = shadeRay(scene, ray, closestEllipsoid, closestFace, minimumDistance);
+
+  // Vec3 color;
+  // if (isSphere) {
+  //   color = shadeSphere(scene, ray, closestEllipsoid, minimumDistance);
+  // } else {
+  //   color = shadeTriangle(scene, ray, closestFace, minimumDistance);
+  // }
   // scene->pixels[ray->location.i][ray->location.j] = color;
   return color;
 }
@@ -226,11 +230,11 @@ float raySphereIntersection(Ray* ray, Ellipsoid* ellipsoid) {
   float t1 = (-b + sqrt(discriminant)) / (2 * a);
   float t2 = (-b - sqrt(discriminant)) / (2 * a);
 
-  if (t1 < 0) {
+  if (t1 < 0 || t1 < EPSILON) {
     return t2;
   }
 
-  if (t2 < 0) {
+  if (t2 < 0 || t2 < EPSILON) {
     return t1;
   }
 
@@ -296,7 +300,7 @@ void printProgressBar(int current, int total) {
   if (progress < 1) {
     printf("%c ", "|/-\\"[spinnerIndex++ % 4]);
   }
-  printf("%d%%", (int)(progress * 100));
+  printf("%d%%    ", (int)(progress * 100));
 
   fflush(stdout);  // Ensures the output is printed immediately
 }

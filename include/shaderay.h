@@ -5,18 +5,25 @@
 #include <stdbool.h>
 #include <time.h>
 
+#include "definitions.h"
 #include "typedefs.h"
 #include "vec3.h"
 
+Vec3 shadeRay(Scene *scene, Ray *ray, Ellipsoid *ellipsoid,
+              Triangle *face, float t);
+
 float raySphereIntersection(Ray *ray, Ellipsoid *ellipsoid);
 float rayTriangleIntersection(Scene *scene, Ray *ray, Triangle *face);
+
+Vec3 traceRay(Scene *scene, Ray *ray);
+
 Vec3 calculateBarycentric(Scene *scene, Triangle *face, Vec3 *pointHit);
 
 Vec3 shadeSphere(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, float t);
 Vec3 shadeTriangle(Scene *scene, Ray *ray, Triangle *face, float t);
 
 Vec3 ellipsoidNormal(Ellipsoid *ellipsoid, Vec3 point);
-float shadowCheck(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, Triangle *face);
+float shadowCheck(Scene *scene, Ray *ray, Ellipsoid *ellipsoid, Triangle *face, float t);
 
 float getAttenuation(Light *light, float distance);
 float getDepthCueing(DepthCue *depthcue, float distance);
@@ -28,4 +35,6 @@ void jitterShadowRay(Ray *shadowRay, Vec3 *orthogonal, Vec3 *ligthDir,
 
 Texel getSphereTexel(Vec3 *normal);
 Texel getTriangleTexel(Scene *scene, Triangle *face, Vec3 *barycentric);
+
+Vec3 reflect(Vec3 *incident, Vec3 *normal);
 #endif  // SHADERAY_H

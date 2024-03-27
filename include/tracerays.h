@@ -11,8 +11,7 @@
 #include "shaderay.h"
 #include "typedefs.h"
 #include "vec3.h"
-
-#define THREADS_ON 1
+#include "definitions.h"
 
 typedef struct {
   Vec3 ul;
@@ -32,6 +31,9 @@ void traceRays(Scene *scene);
 Vec3 traceRay(Scene *scene, Ray *ray);
 
 void* traceRaysThread(void* arg);
+
+float raySphereIntersection(Ray *ray, Ellipsoid *ellipsoid);
+float rayTriangleIntersection(Scene *scene, Ray *ray, Triangle *face);
 
 void printProgressBar(int current, int total);
 
